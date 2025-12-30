@@ -1,0 +1,201 @@
+/**
+ * PreviewControls Styles
+ *
+ * Styling for document preview control buttons and export dropdown.
+ */
+
+/* ==========================================================================
+   Base Controls Container
+   ========================================================================== */
+
+.preview-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+/* ==========================================================================
+   Control Buttons
+   ========================================================================== */
+
+.preview-controls__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background-color: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast);
+  white-space: nowrap;
+}
+
+.preview-controls__btn:hover:not(:disabled) {
+  background-color: var(--color-bg-hover);
+  border-color: var(--color-border-hover);
+  color: var(--color-text-primary);
+}
+
+.preview-controls__btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-border-focus);
+}
+
+.preview-controls__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.preview-controls__btn-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.preview-controls__btn-label {
+  /* Label styling */
+}
+
+/* ==========================================================================
+   Expand Button
+   ========================================================================== */
+
+.preview-controls__expand-btn[aria-pressed='true'] {
+  background-color: var(--color-bg-tertiary);
+}
+
+/* ==========================================================================
+   Export Button & Dropdown
+   ========================================================================== */
+
+.preview-controls__dropdown-container {
+  position: relative;
+}
+
+.preview-controls__export-btn--open {
+  background-color: var(--color-bg-tertiary);
+  border-color: var(--color-border-hover);
+}
+
+.preview-controls__dropdown-arrow {
+  font-size: 8px;
+  margin-left: 2px;
+}
+
+/* ==========================================================================
+   Dropdown Menu
+   ========================================================================== */
+
+.preview-controls__dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 160px;
+  background-color: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+  overflow: hidden;
+  animation: dropdown-appear 0.15s ease-out;
+}
+
+@keyframes dropdown-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.preview-controls__dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: transparent;
+  border: none;
+  font-size: 13px;
+  color: var(--color-text-primary);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.preview-controls__dropdown-item:hover,
+.preview-controls__dropdown-item:focus {
+  background-color: var(--color-bg-hover);
+}
+
+.preview-controls__dropdown-item:focus {
+  outline: none;
+}
+
+.preview-controls__dropdown-item:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--color-border-focus);
+}
+
+.preview-controls__dropdown-icon {
+  font-size: 14px;
+  width: 20px;
+  text-align: center;
+}
+
+/* ==========================================================================
+   Dark Mode
+   ========================================================================== */
+
+[data-theme='dark'] .preview-controls__dropdown {
+  background-color: var(--color-bg-secondary);
+}
+
+[data-theme='dark'] .preview-controls__dropdown-item:hover,
+[data-theme='dark'] .preview-controls__dropdown-item:focus {
+  background-color: var(--color-bg-tertiary);
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
+@media (max-width: 480px) {
+  .preview-controls__btn-label {
+    /* Hide labels on small screens, show icons only */
+  }
+
+  .preview-controls__expand-btn .preview-controls__btn-label {
+    display: none;
+  }
+
+  .preview-controls__dropdown {
+    min-width: 140px;
+  }
+}
+
+/* ==========================================================================
+   Reduced Motion
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .preview-controls__btn {
+    transition: none;
+  }
+
+  .preview-controls__dropdown {
+    animation: none;
+  }
+
+  .preview-controls__dropdown-item {
+    transition: none;
+  }
+}

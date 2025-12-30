@@ -1,0 +1,1974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adversarial Swarm | GovCon Strategy Intelligence</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0b0d;
+            --bg-secondary: #12141a;
+            --bg-tertiary: #1a1d26;
+            --bg-card: #15171f;
+            --blue-primary: #3b82f6;
+            --blue-glow: rgba(59, 130, 246, 0.15);
+            --blue-bright: #60a5fa;
+            --red-primary: #ef4444;
+            --red-glow: rgba(239, 68, 68, 0.15);
+            --red-bright: #f87171;
+            --gold-primary: #f59e0b;
+            --gold-glow: rgba(245, 158, 11, 0.15);
+            --purple-primary: #8b5cf6;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border-color: rgba(255, 255, 255, 0.06);
+            --grid-line: rgba(255, 255, 255, 0.03);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Grid Background */
+        .grid-bg {
+            position: fixed;
+            inset: 0;
+            background-image: 
+                linear-gradient(var(--grid-line) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .grid-bg::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 50% 0%, transparent 0%, var(--bg-primary) 70%);
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 1.5rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(10, 11, 13, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            position: relative;
+        }
+
+        .logo-icon::before,
+        .logo-icon::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+        }
+
+        .logo-icon::before {
+            top: 0;
+            left: 0;
+            background: var(--blue-primary);
+            animation: pulse-blue 2s ease-in-out infinite;
+        }
+
+        .logo-icon::after {
+            bottom: 0;
+            right: 0;
+            background: var(--red-primary);
+            animation: pulse-red 2s ease-in-out infinite 0.5s;
+        }
+
+        @keyframes pulse-blue {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(0.95); }
+        }
+
+        @keyframes pulse-red {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(0.95); }
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 100px;
+            font-size: 0.7rem;
+            letter-spacing: 0.05em;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: #22c55e;
+            border-radius: 50%;
+            animation: blink 2s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* Hero Section */
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 8rem 3rem 4rem;
+            z-index: 1;
+        }
+
+        .hero-content {
+            max-width: 900px;
+        }
+
+        .hero-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.7rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+        }
+
+        .hero-label span {
+            color: var(--gold-primary);
+        }
+
+        h1 {
+            font-family: 'Instrument Serif', serif;
+            font-size: clamp(3rem, 8vw, 6rem);
+            font-weight: 400;
+            line-height: 1.05;
+            letter-spacing: -0.02em;
+            margin-bottom: 2rem;
+        }
+
+        h1 em {
+            font-style: italic;
+            background: linear-gradient(135deg, var(--blue-primary), var(--red-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-desc {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin-bottom: 3rem;
+            line-height: 1.8;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 2rem;
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            text-decoration: none;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--text-primary);
+            color: var(--bg-primary);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--text-muted);
+        }
+
+        /* Animated Hero Visual */
+        .hero-visual {
+            position: absolute;
+            right: 5%;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 400px;
+            height: 400px;
+            opacity: 0.8;
+        }
+
+        .orbit {
+            position: absolute;
+            border: 1px dashed var(--border-color);
+            border-radius: 50%;
+            animation: rotate 20s linear infinite;
+        }
+
+        .orbit-1 {
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+        }
+
+        .orbit-2 {
+            width: 70%;
+            height: 70%;
+            top: 15%;
+            left: 15%;
+            animation-direction: reverse;
+            animation-duration: 15s;
+        }
+
+        .orbit-3 {
+            width: 40%;
+            height: 40%;
+            top: 30%;
+            left: 30%;
+            animation-duration: 10s;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .orbit-node {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .node-blue {
+            background: var(--blue-primary);
+            box-shadow: 0 0 20px var(--blue-primary);
+        }
+
+        .node-red {
+            background: var(--red-primary);
+            box-shadow: 0 0 20px var(--red-primary);
+        }
+
+        .node-gold {
+            background: var(--gold-primary);
+            box-shadow: 0 0 20px var(--gold-primary);
+        }
+
+        .center-node {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--gold-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            position: relative;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background: var(--border-color);
+            margin-top: 4rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-item {
+            background: var(--bg-secondary);
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        /* Section Styling */
+        section {
+            position: relative;
+            z-index: 1;
+            padding: 6rem 3rem;
+        }
+
+        .section-header {
+            max-width: 700px;
+            margin-bottom: 4rem;
+        }
+
+        .section-label {
+            display: inline-block;
+            font-size: 0.7rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h2 {
+            font-family: 'Instrument Serif', serif;
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 400;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-desc {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.8;
+        }
+
+        /* Architecture Section */
+        .architecture {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .arch-diagram {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        .arch-layer {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .arch-layer-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .layer-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 2px;
+        }
+
+        .layer-indicator.blue { background: var(--blue-primary); }
+        .layer-indicator.red { background: var(--red-primary); }
+        .layer-indicator.gold { background: var(--gold-primary); }
+
+        .arch-layer-title {
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .arch-layer-content {
+            padding: 1.5rem;
+        }
+
+        .agent-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .agent-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+
+        .agent-item:hover {
+            transform: translateX(4px);
+        }
+
+        .agent-icon {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+        }
+
+        .agent-item.blue .agent-icon { border: 1px solid var(--blue-primary); }
+        .agent-item.red .agent-icon { border: 1px solid var(--red-primary); }
+        .agent-item.gold .agent-icon { border: 1px solid var(--gold-primary); }
+
+        /* Orchestrator Center */
+        .orchestrator-panel {
+            grid-column: 2;
+            background: var(--bg-card);
+            border: 1px solid var(--gold-primary);
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .orchestrator-panel::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--gold-primary), transparent);
+            opacity: 0.1;
+            z-index: -1;
+        }
+
+        .orchestrator-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .orchestrator-title {
+            font-family: 'Instrument Serif', serif;
+            font-size: 1.5rem;
+            color: var(--gold-primary);
+        }
+
+        .orchestrator-subtitle {
+            font-size: 0.7rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        .workflow-steps {
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .workflow-step {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.25rem;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            position: relative;
+        }
+
+        .workflow-step::after {
+            content: '↓';
+            position: absolute;
+            bottom: -1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .workflow-step:last-child::after {
+            display: none;
+        }
+
+        .step-number {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .step-desc {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .step-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .step-indicator.blue { background: var(--blue-primary); }
+        .step-indicator.red { background: var(--red-primary); }
+        .step-indicator.gold { background: var(--gold-primary); }
+
+        /* Document Types */
+        .doc-types-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .doc-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .doc-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--blue-primary), var(--red-primary));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s ease;
+        }
+
+        .doc-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .doc-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--text-muted);
+        }
+
+        .doc-icon {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .doc-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        .doc-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+        }
+
+        .doc-meta {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .meta-tag {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.65rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            padding: 0.4rem 0.75rem;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+        }
+
+        .meta-tag .dot {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+        }
+
+        .meta-tag .dot.blue { background: var(--blue-primary); }
+        .meta-tag .dot.red { background: var(--red-primary); }
+
+        /* Debate Theater Section */
+        .debate-section {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .debate-preview {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .debate-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem 1.5rem;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .debate-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 0.75rem;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 100px;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--red-bright);
+        }
+
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--red-primary);
+            border-radius: 50%;
+            animation: blink 1s ease-in-out infinite;
+        }
+
+        .phase-badge {
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+        }
+
+        .phase-badge span {
+            color: var(--red-bright);
+        }
+
+        .debate-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 400px;
+        }
+
+        .debate-theater {
+            padding: 1.5rem;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .agent-message {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            border-left: 3px solid transparent;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .agent-message.blue { border-left-color: var(--blue-primary); }
+        .agent-message.red { border-left-color: var(--red-primary); }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+        }
+
+        .message-agent {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .message-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            border-radius: 4px;
+        }
+
+        .message-icon.blue { background: var(--blue-glow); }
+        .message-icon.red { background: var(--red-glow); }
+
+        .message-name {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .message-name.blue { color: var(--blue-bright); }
+        .message-name.red { color: var(--red-bright); }
+
+        .severity-badge {
+            font-size: 0.6rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+
+        .severity-critical {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--red-bright);
+        }
+
+        .severity-major {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--gold-primary);
+        }
+
+        .message-target {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+        }
+
+        .message-content {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .message-content em {
+            color: var(--text-primary);
+            font-style: normal;
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 0.25rem;
+            padding: 0.5rem 0;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--text-muted);
+            border-radius: 50%;
+            animation: typing 1.4s ease-in-out infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-4px); opacity: 1; }
+        }
+
+        /* Document Preview */
+        .doc-preview {
+            padding: 1.5rem;
+            background: var(--bg-primary);
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .preview-title {
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .confidence-display {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .confidence-bar {
+            width: 100px;
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--blue-primary), var(--purple-primary));
+            border-radius: 3px;
+            width: 78%;
+            transition: width 0.5s ease;
+        }
+
+        .confidence-value {
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .preview-sections {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .preview-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1rem 1.25rem;
+        }
+
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .section-name {
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .section-score {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            padding: 0.25rem 0.5rem;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+        }
+
+        .section-score.high { color: #22c55e; }
+        .section-score.medium { color: var(--gold-primary); }
+
+        .section-preview {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .section-warning {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+            padding: 0.5rem 0.75rem;
+            background: rgba(245, 158, 11, 0.1);
+            border-radius: 4px;
+            font-size: 0.7rem;
+            color: var(--gold-primary);
+        }
+
+        /* Confidence Section */
+        .confidence-section {
+            background: var(--bg-primary);
+        }
+
+        .confidence-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+
+        .confidence-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+        }
+
+        .confidence-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .confidence-score-lg {
+            font-size: 3rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .confidence-score-lg.high { color: #22c55e; }
+        .confidence-score-lg.medium { color: var(--gold-primary); }
+        .confidence-score-lg.low { color: var(--red-primary); }
+
+        .confidence-label {
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .confidence-meaning {
+            margin-top: 0.25rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .confidence-criteria {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .criteria-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .criteria-check {
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+            border-radius: 4px;
+            font-size: 0.7rem;
+        }
+
+        .criteria-x {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--red-primary);
+        }
+
+        /* Tech Stack */
+        .tech-section {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+        }
+
+        .tech-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .tech-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .tech-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            font-size: 1.25rem;
+        }
+
+        .tech-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .tech-subtitle {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        .tech-content {
+            padding: 1.5rem;
+        }
+
+        .tech-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .tech-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+        }
+
+        .tech-name {
+            font-size: 0.8rem;
+        }
+
+        .tech-badge {
+            font-size: 0.65rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            padding: 0.3rem 0.6rem;
+            border-radius: 3px;
+        }
+
+        .tech-badge.implemented {
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+        }
+
+        .tech-badge.planned {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--gold-primary);
+        }
+
+        /* Footer */
+        footer {
+            position: relative;
+            z-index: 1;
+            padding: 4rem 3rem;
+            background: var(--bg-primary);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .footer-text {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .footer-links a {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--text-primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .arch-diagram {
+                grid-template-columns: 1fr;
+            }
+            
+            .orchestrator-panel {
+                grid-column: 1;
+            }
+            
+            .hero-visual {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            nav {
+                padding: 1rem 1.5rem;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+            
+            section {
+                padding: 4rem 1.5rem;
+            }
+            
+            .hero {
+                padding: 6rem 1.5rem 3rem;
+            }
+            
+            .stats-bar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .debate-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .debate-theater {
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+            }
+            
+            .confidence-grid,
+            .tech-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .footer-content {
+                flex-direction: column;
+                gap: 2rem;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="grid-bg"></div>
+    
+    <nav>
+        <div class="logo">
+            <div class="logo-icon"></div>
+            BidFoundry
+        </div>
+        <div class="nav-links">
+            <a href="#architecture">Architecture</a>
+            <a href="#documents">Documents</a>
+            <a href="#debate">Debate Theater</a>
+            <a href="#tech">Tech Stack</a>
+        </div>
+        <div class="status-badge">
+            <span class="status-dot"></span>
+            System Operational
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-label">
+                <span>v1.1</span> GovCon Strategy Intelligence Platform
+            </div>
+            <h1>Better strategies emerge from <em>rigorous challenge</em></h1>
+            <p class="hero-desc">
+                An adversarial agentic swarm that produces high-quality business strategy documents through structured red team/blue team debate. Multiple AI agents with distinct roles collaborate through conflict to surface weaknesses, blind spots, and opportunities.
+            </p>
+            <div class="hero-actions">
+                <a href="#documents" class="btn btn-primary">
+                    View Document Types
+                    <span>↓</span>
+                </a>
+                <a href="#architecture" class="btn btn-secondary">
+                    Explore Architecture
+                </a>
+            </div>
+        </div>
+        
+        <div class="hero-visual">
+            <div class="orbit orbit-1">
+                <div class="orbit-node node-blue" style="top: 0; left: 50%; transform: translate(-50%, -50%);"></div>
+                <div class="orbit-node node-red" style="bottom: 0; left: 50%; transform: translate(-50%, 50%);"></div>
+            </div>
+            <div class="orbit orbit-2">
+                <div class="orbit-node node-blue" style="top: 50%; right: 0; transform: translate(50%, -50%);"></div>
+                <div class="orbit-node node-red" style="top: 50%; left: 0; transform: translate(-50%, -50%);"></div>
+            </div>
+            <div class="orbit orbit-3">
+                <div class="orbit-node node-gold" style="top: 0; left: 50%; transform: translate(-50%, -50%);"></div>
+            </div>
+            <div class="center-node">⚖️</div>
+        </div>
+        
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-value">8</div>
+                <div class="stat-label">Active Agents</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">7</div>
+                <div class="stat-label">Document Types</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">80%+</div>
+                <div class="stat-label">Avg Confidence</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">3</div>
+                <div class="stat-label">Debate Rounds</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="architecture" id="architecture">
+        <div class="section-header">
+            <div class="section-label">System Architecture</div>
+            <h2>Adversarial by design</h2>
+            <p class="section-desc">
+                The swarm consists of Blue Team builders, Red Team challengers, and an Arbiter orchestrator that manages structured debate to reach consensus on strategy recommendations.
+            </p>
+        </div>
+        
+        <div class="arch-diagram">
+            <div class="arch-layer">
+                <div class="arch-layer-header">
+                    <span class="layer-indicator blue"></span>
+                    <span class="arch-layer-title">Blue Team — Builders</span>
+                </div>
+                <div class="arch-layer-content">
+                    <div class="agent-list">
+                        <div class="agent-item blue">
+                            <div class="agent-icon">📐</div>
+                            <div>
+                                <div style="font-weight: 600;">Strategy Architect</div>
+                                <div style="font-size: 0.7rem; color: var(--text-muted);">Primary document drafter</div>
+                            </div>
+                        </div>
+                        <div class="agent-item blue">
+                            <div class="agent-icon">📊</div>
+                            <div>
+                                <div style="font-weight: 600;">Market Analyst</div>
+                                <div style="font-size: 0.7rem; color: var(--text-muted);">Government market intel</div>
+                            </div>
+                        </div>
+                        <div class="agent-item blue">
+                            <div class="agent-icon">📋</div>
+                            <div>
+                                <div style="font-weight: 600;">Compliance Navigator</div>
+                                <div style="font-size: 0.7rem; color: var(--text-muted);">FAR/DFAR expert</div>
+                            </div>
+                        </div>
+                        <div class="agent-item blue">
+                            <div class="agent-icon">🎯</div>
+                            <div>
+                                <div style="font-weight: 600;">Capture Strategist</div>
+                                <div style="font-size: 0.7rem; color: var(--text-muted);">Win strategy development</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="orchestrator-panel">
+                <div class="orchestrator-header">
+                    <div class="orchestrator-title">⚖️ Arbiter Agent</div>
+                    <div class="orchestrator-subtitle">Orchestration Layer</div>
+                </div>
+                <div class="workflow-steps">
+                    <div class="workflow-step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <div class="step-title">Blue Team Build</div>
+                            <div class="step-desc">Initial document draft</div>
+                        </div>
+                        <div class="step-indicator blue"></div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <div class="step-title">Red Team Attack</div>
+                            <div class="step-desc">Independent critiques</div>
+                        </div>
+                        <div class="step-indicator red"></div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <div class="step-title">Blue Team Defense</div>
+                            <div class="step-desc">Accept, rebut, or acknowledge</div>
+                        </div>
+                        <div class="step-indicator blue"></div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <div class="step-title">Arbiter Synthesis</div>
+                            <div class="step-desc">Final compilation + confidence</div>
+                        </div>
+                        <div class="step-indicator gold"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arch-layer">
+                <div class="arch-layer-header">
+                    <span class="layer-indicator red"></span>
+                    <span class="arch-layer-title">Red Team — Challengers</span>
+                </div>
+                <div class="arch-layer-content">
+                    <div class="agent-list">
+                        <div class="agent-item red">
+                            <div class="agent-icon">😈</div>
+                            <div>
+                                <div style="font-weight: 600;">Devil's Advocate</div>
+                                <div style="font-size: 0.7rem; color: var(--text-muted);">Contrarian challenger</div>
+                            </div>
+                        </div>
+                        <div class="agent-item red">
+                            <div class="agent-icon">🎭</div>
+                            <div>
+                                <div style="font-weight: 600;">Competitor Simulator</div>
+                                <div style="font-size: 0.7rem; color: var(--text-muted);">Threat modeling</div>
+                            </div>
+                        </div>
+                        <div class="agent-item red">
+                            <div class="agent-icon">👔</div>
+                            <div>
+                                <div style="font-weight: 600;">Evaluator Simulator</div>
+                                <div style="font-size: 0.7rem; color: var(--text-muted);">SSEB perspective</div>
+                            </div>
+                        </div>
+                        <div class="agent-item red">
+                            <div class="agent-icon">⚠️</div>
+                            <div>
+                                <div style="font-weight: 600;">Risk Assessor</div>
+                                <div style="font-size: 0.7rem; color: var(--text-muted);">Downside scenarios</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="documents">
+        <div class="section-header">
+            <div class="section-label">Output Documents</div>
+            <h2>Strategy documents that win</h2>
+            <p class="section-desc">
+                Seven specialized document types, each with tailored agent configurations, adversarial depth, and challenge rubrics optimized for the specific use case.
+            </p>
+        </div>
+        
+        <div class="doc-types-grid">
+            <div class="doc-card">
+                <div class="doc-icon">📄</div>
+                <div class="doc-title">Capability Statement</div>
+                <div class="doc-desc">Marketing collateral for agency outreach with quantified past performance and clear differentiation.</div>
+                <div class="doc-meta">
+                    <span class="meta-tag"><span class="dot blue"></span> 2 Rounds</span>
+                    <span class="meta-tag"><span class="dot red"></span> Evaluator Focus</span>
+                </div>
+            </div>
+            
+            <div class="doc-card">
+                <div class="doc-icon">⚔️</div>
+                <div class="doc-title">Competitive Analysis</div>
+                <div class="doc-desc">Assessment of competitive landscape with market sizing, competitor strengths, and vulnerability identification.</div>
+                <div class="doc-meta">
+                    <span class="meta-tag"><span class="dot blue"></span> 3 Rounds</span>
+                    <span class="meta-tag"><span class="dot red"></span> Competitor Sim</span>
+                </div>
+            </div>
+            
+            <div class="doc-card">
+                <div class="doc-icon">🎯</div>
+                <div class="doc-title">Proposal Strategy</div>
+                <div class="doc-desc">Win themes, discriminators, price-to-win guidance, and evaluation criteria mapping for specific RFPs.</div>
+                <div class="doc-meta">
+                    <span class="meta-tag"><span class="dot blue"></span> 4 Rounds</span>
+                    <span class="meta-tag"><span class="dot red"></span> Full Red Team</span>
+                </div>
+            </div>
+            
+            <div class="doc-card">
+                <div class="doc-icon">📈</div>
+                <div class="doc-title">SWOT Analysis</div>
+                <div class="doc-desc">Internal strategic positioning assessment with actionable recommendations.</div>
+                <div class="doc-meta">
+                    <span class="meta-tag"><span class="dot blue"></span> 2 Rounds</span>
+                    <span class="meta-tag"><span class="dot red"></span> Risk Focus</span>
+                </div>
+            </div>
+            
+            <div class="doc-card">
+                <div class="doc-icon">🚀</div>
+                <div class="doc-title">Go-to-Market Strategy</div>
+                <div class="doc-desc">Entry strategy for contract vehicles like GSA Schedule, GWACs, and agency IDIQs.</div>
+                <div class="doc-meta">
+                    <span class="meta-tag"><span class="dot blue"></span> 3 Rounds</span>
+                    <span class="meta-tag"><span class="dot red"></span> Devil's Advocate</span>
+                </div>
+            </div>
+            
+            <div class="doc-card">
+                <div class="doc-icon">🤝</div>
+                <div class="doc-title">Teaming Strategy</div>
+                <div class="doc-desc">Partner identification, teaming arrangements, and mentor-protégé recommendations.</div>
+                <div class="doc-meta">
+                    <span class="meta-tag"><span class="dot blue"></span> 3 Rounds</span>
+                    <span class="meta-tag"><span class="dot red"></span> Risk Focus</span>
+                </div>
+            </div>
+            
+            <div class="doc-card">
+                <div class="doc-icon">📊</div>
+                <div class="doc-title">BD Pipeline Plan</div>
+                <div class="doc-desc">Opportunity prioritization and pursuit strategy with resource allocation guidance.</div>
+                <div class="doc-meta">
+                    <span class="meta-tag"><span class="dot blue"></span> 2 Rounds</span>
+                    <span class="meta-tag"><span class="dot red"></span> Market Focus</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="debate-section" id="debate">
+        <div class="section-header">
+            <div class="section-label">Real-Time Streaming</div>
+            <h2>Watch the debate unfold</h2>
+            <p class="section-desc">
+                Transparent AI reasoning with live-streaming agent activity. See exactly how agents argue, critique, and resolve disputes in real-time.
+            </p>
+        </div>
+        
+        <div class="debate-preview">
+            <div class="debate-header">
+                <div class="debate-title">
+                    <span style="font-size: 0.85rem; font-weight: 600;">Competitive Analysis: DHS EAGLE II Recompete</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 1.5rem;">
+                    <div class="phase-badge">Phase: <span>Red Team Attack</span></div>
+                    <div class="live-indicator">
+                        <span class="live-dot"></span>
+                        Live
+                    </div>
+                </div>
+            </div>
+            
+            <div class="debate-content">
+                <div class="debate-theater">
+                    <div class="agent-message red">
+                        <div class="message-header">
+                            <div class="message-agent">
+                                <div class="message-icon red">😈</div>
+                                <span class="message-name red">Devil's Advocate</span>
+                            </div>
+                            <span class="severity-badge severity-critical">Critical</span>
+                        </div>
+                        <div class="message-target">TARGET: Section 3.2 — Market Sizing</div>
+                        <div class="message-content">
+                            "The $2.4B TAM estimate assumes <em>15% YoY growth</em>, but Agency X's budget justification shows flat funding through FY26. This undermines the entire growth thesis."
+                            <br><br>
+                            <strong>Suggested Remedy:</strong> Revise to 3-5% growth with sensitivity analysis for flat scenario.
+                        </div>
+                    </div>
+                    
+                    <div class="agent-message red">
+                        <div class="message-header">
+                            <div class="message-agent">
+                                <div class="message-icon red">👔</div>
+                                <span class="message-name red">Evaluator Simulator</span>
+                            </div>
+                            <span class="severity-badge severity-major">Major</span>
+                        </div>
+                        <div class="message-target">TARGET: Section 4.1 — Past Performance</div>
+                        <div class="message-content">
+                            "Past performance narrative lacks <em>quantified outcomes</em>. An SSEB would score this as a weakness. Government evaluators expect metrics: cost savings %, on-time delivery %, customer satisfaction scores."
+                        </div>
+                    </div>
+                    
+                    <div class="agent-message red" style="opacity: 0.7;">
+                        <div class="message-header">
+                            <div class="message-agent">
+                                <div class="message-icon red">🎭</div>
+                                <span class="message-name red">Competitor Simulator</span>
+                            </div>
+                        </div>
+                        <div class="typing-indicator">
+                            <span class="typing-dot"></span>
+                            <span class="typing-dot"></span>
+                            <span class="typing-dot"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="doc-preview">
+                    <div class="preview-header">
+                        <span class="preview-title">Document Preview</span>
+                        <div class="confidence-display">
+                            <div class="confidence-bar">
+                                <div class="confidence-fill"></div>
+                            </div>
+                            <span class="confidence-value">78%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="preview-sections">
+                        <div class="preview-section">
+                            <div class="section-head">
+                                <span class="section-name">1. Executive Summary</span>
+                                <span class="section-score high">92%</span>
+                            </div>
+                            <div class="section-preview">
+                                Acme Federal is well-positioned to capture Task Order opportunities under the EAGLE II recompete, with particular strength in cybersecurity and cloud migration...
+                            </div>
+                        </div>
+                        
+                        <div class="preview-section">
+                            <div class="section-head">
+                                <span class="section-name">2. Market Landscape</span>
+                                <span class="section-score medium">71%</span>
+                            </div>
+                            <div class="section-preview">
+                                The DHS IT services market represents approximately $2.4B in annual spend, with projected growth of <span style="text-decoration: line-through; opacity: 0.5;">15%</span> <span style="color: var(--gold-primary);">3-5%</span> annually...
+                            </div>
+                            <div class="section-warning">
+                                ⚠️ 2 unresolved critiques — Revision in progress
+                            </div>
+                        </div>
+                        
+                        <div class="preview-section">
+                            <div class="section-head">
+                                <span class="section-name">3. Competitor Profiles</span>
+                                <span class="section-score high">85%</span>
+                            </div>
+                            <div class="section-preview">
+                                Primary competitors include Booz Allen Hamilton (incumbent), Leidos, and SAIC with combined 68% market share in relevant NAICS codes...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="confidence-section">
+        <div class="section-header">
+            <div class="section-label">Quality Assurance</div>
+            <h2>Confidence-scored outputs</h2>
+            <p class="section-desc">
+                Every document section receives a confidence score based on adversarial resolution, with automatic escalation to human review when thresholds aren't met.
+            </p>
+        </div>
+        
+        <div class="confidence-grid">
+            <div class="confidence-card">
+                <div class="confidence-header">
+                    <div class="confidence-score-lg high">90%+</div>
+                    <div>
+                        <div class="confidence-label">High Confidence</div>
+                        <div class="confidence-meaning">Strong consensus reached</div>
+                    </div>
+                </div>
+                <div class="confidence-criteria">
+                    <div class="criteria-item">
+                        <span class="criteria-check">✓</span>
+                        No unresolved critical critiques
+                    </div>
+                    <div class="criteria-item">
+                        <span class="criteria-check">✓</span>
+                        No unresolved major critiques
+                    </div>
+                    <div class="criteria-item">
+                        <span class="criteria-check">✓</span>
+                        Full team agreement
+                    </div>
+                </div>
+            </div>
+            
+            <div class="confidence-card">
+                <div class="confidence-header">
+                    <div class="confidence-score-lg medium">70-89%</div>
+                    <div>
+                        <div class="confidence-label">Medium Confidence</div>
+                        <div class="confidence-meaning">Qualified consensus</div>
+                    </div>
+                </div>
+                <div class="confidence-criteria">
+                    <div class="criteria-item">
+                        <span class="criteria-check">✓</span>
+                        No unresolved critical critiques
+                    </div>
+                    <div class="criteria-item">
+                        <span class="criteria-check criteria-x">—</span>
+                        Minor unresolved issues
+                    </div>
+                    <div class="criteria-item">
+                        <span class="criteria-check criteria-x">—</span>
+                        Acknowledged risks present
+                    </div>
+                </div>
+            </div>
+            
+            <div class="confidence-card">
+                <div class="confidence-header">
+                    <div class="confidence-score-lg low">&lt;70%</div>
+                    <div>
+                        <div class="confidence-label">Human Review</div>
+                        <div class="confidence-meaning">Automatic escalation</div>
+                    </div>
+                </div>
+                <div class="confidence-criteria">
+                    <div class="criteria-item">
+                        <span class="criteria-check criteria-x">!</span>
+                        Major unresolved disputes
+                    </div>
+                    <div class="criteria-item">
+                        <span class="criteria-check criteria-x">!</span>
+                        Red/Blue team impasse
+                    </div>
+                    <div class="criteria-item">
+                        <span class="criteria-check criteria-x">!</span>
+                        Compliance uncertainty
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="tech-section" id="tech">
+        <div class="section-header">
+            <div class="section-label">Technology</div>
+            <h2>Production-grade stack</h2>
+            <p class="section-desc">
+                Built with FastAPI, React, WebSocket streaming, and multi-provider LLM support for reliable, scalable document generation.
+            </p>
+        </div>
+        
+        <div class="tech-grid">
+            <div class="tech-card">
+                <div class="tech-header">
+                    <div class="tech-icon">⚡</div>
+                    <div>
+                        <div class="tech-title">Backend Server</div>
+                        <div class="tech-subtitle">FastAPI + WebSocket</div>
+                    </div>
+                </div>
+                <div class="tech-content">
+                    <div class="tech-list">
+                        <div class="tech-item">
+                            <span class="tech-name">REST API (Documents, Profiles)</span>
+                            <span class="tech-badge implemented">✓ Implemented</span>
+                        </div>
+                        <div class="tech-item">
+                            <span class="tech-name">WebSocket Streaming</span>
+                            <span class="tech-badge implemented">✓ Implemented</span>
+                        </div>
+                        <div class="tech-item">
+                            <span class="tech-name">Document Export (Word/PDF/MD)</span>
+                            <span class="tech-badge implemented">✓ Implemented</span>
+                        </div>
+                        <div class="tech-item">
+                            <span class="tech-name">SQLite / PostgreSQL</span>
+                            <span class="tech-badge implemented">✓ Implemented</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tech-card">
+                <div class="tech-header">
+                    <div class="tech-icon">🎨</div>
+                    <div>
+                        <div class="tech-title">Frontend Application</div>
+                        <div class="tech-subtitle">React + TypeScript</div>
+                    </div>
+                </div>
+                <div class="tech-content">
+                    <div class="tech-list">
+                        <div class="tech-item">
+                            <span class="tech-name">Debate Theater View</span>
+                            <span class="tech-badge implemented">✓ Implemented</span>
+                        </div>
+                        <div class="tech-item">
+                            <span class="tech-name">Real-time Agent Cards</span>
+                            <span class="tech-badge implemented">✓ Implemented</span>
+                        </div>
+                        <div class="tech-item">
+                            <span class="tech-name">Human Review Modal</span>
+                            <span class="tech-badge implemented">✓ Implemented</span>
+                        </div>
+                        <div class="tech-item">
+                            <span class="tech-name">Keyboard Shortcuts</span>
+                            <span class="tech-badge implemented">✓ Implemented</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tech-card">
+                <div class="tech-header">
+                    <div class="tech-icon">🤖</div>
+                    <div>
+                        <div class="tech-title">LLM Providers</div>
+                        <div class="tech-subtitle">Multi-Provider Support</div>
+                    </div>
+                </div>
+                <div class="tech-content">
+                    <div class="tech-list">
+                        <div class="tech-item">
+                            <span class="tech-name">Anthropic Claude 4.5 Haiku</span>
+                            <span class="tech-badge implemented">✓ Implemented</span>
+                        </div>
+                        <div class="tech-item">
+                            <span class="tech-name">Groq Llama 3.3 70B Versatile</span>
+                            <span class="tech-badge implemented">✓ Implemented</span>
+                        </div>
+                        <div class="tech-item">
+                            <span class="tech-name">Streaming Support</span>
+                            <span class="tech-badge implemented">✓ Implemented</span>
+                        </div>
+                        <div class="tech-item">
+                            <span class="tech-name">Per-Agent Model Config</span>
+                            <span class="tech-badge implemented">✓ Implemented</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tech-card">
+                <div class="tech-header">
+                    <div class="tech-icon">🔮</div>
+                    <div>
+                        <div class="tech-title">Future Enhancements</div>
+                        <div class="tech-subtitle">Phase 2 Roadmap</div>
+                    </div>
+                </div>
+                <div class="tech-content">
+                    <div class="tech-list">
+                        <div class="tech-item">
+                            <span class="tech-name">Specialist Agents (GSA, SBIR)</span>
+                            <span class="tech-badge planned">Planned</span>
+                        </div>
+                        <div class="tech-item">
+                            <span class="tech-name">Win/Loss Learning</span>
+                            <span class="tech-badge planned">Planned</span>
+                        </div>
+                        <div class="tech-item">
+                            <span class="tech-name">Collaborative Review</span>
+                            <span class="tech-badge planned">Planned</span>
+                        </div>
+                        <div class="tech-item">
+                            <span class="tech-name">Proposal Draft Generation</span>
+                            <span class="tech-badge planned">Planned</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-logo">
+                <div class="logo-icon" style="width: 24px; height: 24px;">
+                    <style>
+                        .footer-logo .logo-icon::before,
+                        .footer-logo .logo-icon::after {
+                            width: 12px;
+                            height: 12px;
+                        }
+                    </style>
+                </div>
+                <span class="footer-text">Adversarial Swarm v1.1 — GovCon Strategy Intelligence</span>
+            </div>
+            <div class="footer-links">
+                <a href="#architecture">Architecture</a>
+                <a href="#documents">Documents</a>
+                <a href="#debate">Debate Theater</a>
+                <a href="#tech">Tech Stack</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth reveal animations on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.doc-card, .confidence-card, .tech-card, .arch-layer, .orchestrator-panel').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(el);
+        });
+
+        // Animate confidence bar on scroll
+        const confidenceObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.width = '78%';
+                }
+            });
+        }, { threshold: 0.5 });
+
+        document.querySelectorAll('.confidence-fill').forEach(el => {
+            el.style.width = '0%';
+            confidenceObserver.observe(el);
+        });
+
+        // Typing animation restart
+        setInterval(() => {
+            document.querySelectorAll('.typing-dot').forEach(dot => {
+                dot.style.animation = 'none';
+                void dot.offsetWidth;
+                dot.style.animation = '';
+            });
+        }, 5000);
+    </script>
+</body>
+</html>

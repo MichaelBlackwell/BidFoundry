@@ -1,0 +1,182 @@
+/**
+ * ExportOptions Component Styles
+ */
+
+.export-options {
+  padding: 1rem;
+  background: var(--color-surface-primary, #ffffff);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 0.5rem;
+}
+
+.export-options__title {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-primary, #1e293b);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+/* Button Grid */
+.export-options__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.export-options__button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border, #e2e8f0);
+  background: var(--color-surface-secondary, #f8fafc);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.export-options__button:hover:not(:disabled) {
+  background: var(--color-surface-hover, #e2e8f0);
+  border-color: var(--color-primary-light, #93c5fd);
+}
+
+.export-options__button:focus-visible {
+  outline: 2px solid var(--color-primary, #3b82f6);
+  outline-offset: 2px;
+}
+
+.export-options__button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.export-options__button--loading {
+  background: var(--color-primary-light, #dbeafe);
+  border-color: var(--color-primary, #3b82f6);
+}
+
+.export-options__button-icon {
+  font-size: 1.5rem;
+}
+
+.export-options__button-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text-primary, #1e293b);
+}
+
+.export-options__button-shortcut {
+  display: none;
+  font-size: 0.625rem;
+  color: var(--color-text-tertiary, #94a3b8);
+  font-family: var(--font-mono, monospace);
+  padding: 0.125rem 0.25rem;
+  background: var(--color-surface-tertiary, #e2e8f0);
+  border-radius: 0.25rem;
+}
+
+@media (min-width: 768px) {
+  .export-options__button-shortcut {
+    display: block;
+  }
+}
+
+/* Share Link */
+.export-options__share-link {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: var(--color-surface-secondary, #f8fafc);
+  border-radius: 0.375rem;
+}
+
+.export-options__share-link-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.export-options__share-link-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-secondary, #64748b);
+}
+
+.export-options__share-link-copied {
+  font-size: 0.75rem;
+  color: var(--color-success, #22c55e);
+  font-weight: 500;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.export-options__share-link-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.export-options__share-link-input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  font-family: var(--font-mono, monospace);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 0.25rem;
+  background: var(--color-surface-primary, #ffffff);
+  color: var(--color-text-primary, #1e293b);
+}
+
+.export-options__share-link-input:focus {
+  outline: 2px solid var(--color-primary, #3b82f6);
+  outline-offset: 1px;
+}
+
+/* Quick Actions */
+.export-options__quick-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border, #e2e8f0);
+}
+
+.export-options__quick-actions .btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .export-options__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .export-options__button {
+    flex-direction: row;
+    justify-content: flex-start;
+    padding: 0.75rem 1rem;
+  }
+
+  .export-options__button-icon {
+    font-size: 1.25rem;
+  }
+
+  .export-options__quick-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}

@@ -1,0 +1,128 @@
+/**
+ * AgentAvatar Styles
+ */
+
+.agent-avatar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   Size Variations
+   ========================================================================== */
+
+.agent-avatar--sm {
+  width: 24px;
+  height: 24px;
+  font-size: 12px;
+}
+
+.agent-avatar--md {
+  width: 32px;
+  height: 32px;
+  font-size: 16px;
+}
+
+.agent-avatar--lg {
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+}
+
+/* ==========================================================================
+   Icon
+   ========================================================================== */
+
+.agent-avatar__icon {
+  line-height: 1;
+}
+
+/* ==========================================================================
+   Category Background Colors
+   ========================================================================== */
+
+.agent-avatar--blue {
+  background-color: color-mix(in srgb, var(--color-blue-team) 15%, transparent);
+}
+
+.agent-avatar--red {
+  background-color: color-mix(in srgb, var(--color-red-team) 15%, transparent);
+}
+
+.agent-avatar--specialist {
+  background-color: color-mix(in srgb, var(--color-specialist) 15%, transparent);
+}
+
+.agent-avatar--orchestrator {
+  background-color: color-mix(in srgb, var(--color-arbiter) 15%, transparent);
+}
+
+/* ==========================================================================
+   State Variations
+   ========================================================================== */
+
+.agent-avatar--idle {
+  opacity: 0.6;
+}
+
+.agent-avatar--waiting {
+  opacity: 0.5;
+}
+
+/* ==========================================================================
+   Activity Indicator
+   ========================================================================== */
+
+.agent-avatar__activity-indicator {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  background-color: var(--color-success);
+  border: 2px solid var(--color-bg-primary);
+  border-radius: 50%;
+  animation: activity-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes activity-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+}
+
+/* Different indicator for typing vs thinking */
+.agent-avatar--typing .agent-avatar__activity-indicator {
+  background-color: var(--color-info);
+}
+
+.agent-avatar--thinking .agent-avatar__activity-indicator {
+  background-color: var(--color-warning);
+}
+
+/* ==========================================================================
+   Reduced Motion
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-avatar__activity-indicator {
+    animation: none;
+  }
+}
+
+/* ==========================================================================
+   Dark Mode
+   ========================================================================== */
+
+[data-theme='dark'] .agent-avatar__activity-indicator {
+  border-color: var(--color-bg-secondary);
+}

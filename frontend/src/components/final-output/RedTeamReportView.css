@@ -1,0 +1,263 @@
+/**
+ * RedTeamReportView Component Styles
+ */
+
+.red-team-report {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Summary */
+.red-team-report__summary {
+  padding: 1rem;
+  background: var(--color-surface-secondary, #f8fafc);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 0.5rem;
+}
+
+.red-team-report__summary-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-primary, #1e293b);
+}
+
+.red-team-report__summary-text {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--color-text-secondary, #64748b);
+}
+
+/* Stats Bar */
+.red-team-report__stats {
+  padding: 0.75rem 1rem;
+  background: var(--color-surface-primary, #ffffff);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 0.5rem;
+}
+
+.red-team-report__stat-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.red-team-report__stat {
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.red-team-report__stat--total {
+  color: var(--color-text-primary, #1e293b);
+}
+
+.red-team-report__stat--critical {
+  color: var(--color-danger, #ef4444);
+}
+
+.red-team-report__stat--major {
+  color: var(--color-warning-dark, #b45309);
+}
+
+.red-team-report__stat--minor {
+  color: var(--color-info, #3b82f6);
+}
+
+/* Filters */
+.red-team-report__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--color-surface-secondary, #f8fafc);
+  border-radius: 0.375rem;
+}
+
+.red-team-report__filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.red-team-report__filter-label {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary, #64748b);
+}
+
+.red-team-report__filter-select {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 0.25rem;
+  background: var(--color-surface-primary, #ffffff);
+  color: var(--color-text-primary, #1e293b);
+  cursor: pointer;
+}
+
+.red-team-report__filter-select:focus {
+  outline: 2px solid var(--color-primary, #3b82f6);
+  outline-offset: 1px;
+}
+
+/* Critiques List */
+.red-team-report__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.red-team-report__empty {
+  padding: 2rem;
+  text-align: center;
+  color: var(--color-text-tertiary, #94a3b8);
+  font-size: 0.875rem;
+}
+
+/* Individual Critique */
+.red-team-report__critique {
+  padding: 1rem;
+  background: var(--color-surface-primary, #ffffff);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 0.5rem;
+  border-left-width: 3px;
+}
+
+.red-team-report__critique--critical {
+  border-left-color: var(--color-danger, #ef4444);
+}
+
+.red-team-report__critique--major {
+  border-left-color: var(--color-warning, #f59e0b);
+}
+
+.red-team-report__critique--minor {
+  border-left-color: var(--color-info, #3b82f6);
+}
+
+.red-team-report__critique--clickable {
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.red-team-report__critique--clickable:hover {
+  border-color: var(--color-primary-light, #93c5fd);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.red-team-report__critique--clickable:focus-visible {
+  outline: 2px solid var(--color-primary, #3b82f6);
+  outline-offset: 2px;
+}
+
+.red-team-report__critique-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.red-team-report__severity {
+  padding: 0.125rem 0.5rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  border-radius: 9999px;
+}
+
+.red-team-report__severity--critical {
+  background: var(--color-danger-light, #fef2f2);
+  color: var(--color-danger, #ef4444);
+}
+
+.red-team-report__severity--major {
+  background: var(--color-warning-light, #fffbeb);
+  color: var(--color-warning-dark, #b45309);
+}
+
+.red-team-report__severity--minor {
+  background: var(--color-info-light, #eff6ff);
+  color: var(--color-info, #3b82f6);
+}
+
+.red-team-report__agent {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-red-team, #ef4444);
+}
+
+.red-team-report__status {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: auto;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.red-team-report__status-icon {
+  font-weight: 700;
+}
+
+.red-team-report__status--accepted {
+  color: var(--color-success, #22c55e);
+}
+
+.red-team-report__status--rebutted {
+  color: var(--color-danger, #ef4444);
+}
+
+.red-team-report__status--acknowledged {
+  color: var(--color-warning, #f59e0b);
+}
+
+.red-team-report__status--pending {
+  color: var(--color-text-tertiary, #94a3b8);
+}
+
+.red-team-report__critique-target {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary, #94a3b8);
+  margin-bottom: 0.5rem;
+}
+
+.red-team-report__critique-content {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--color-text-primary, #1e293b);
+}
+
+.red-team-report__critique-remedy {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--color-border, #e2e8f0);
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary, #64748b);
+}
+
+.red-team-report__critique-remedy strong {
+  color: var(--color-text-primary, #1e293b);
+}
+
+/* Response */
+.red-team-report__response {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: var(--color-blue-team-bg, #eff6ff);
+  border-radius: 0.375rem;
+}
+
+.red-team-report__response-header {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-blue-team, #3b82f6);
+  margin-bottom: 0.25rem;
+}
+
+.red-team-report__response-content {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--color-text-secondary, #64748b);
+}

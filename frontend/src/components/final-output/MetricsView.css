@@ -1,0 +1,382 @@
+/**
+ * MetricsView Component Styles
+ */
+
+.metrics-view {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Summary Cards */
+.metrics-view__summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.metrics-view__card {
+  padding: 1rem;
+  background: var(--color-surface-primary, #ffffff);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 0.5rem;
+  text-align: center;
+}
+
+.metrics-view__card-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-primary, #3b82f6);
+  font-variant-numeric: tabular-nums;
+}
+
+.metrics-view__card-label {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary, #64748b);
+  margin-top: 0.25rem;
+}
+
+/* Grid Layout */
+.metrics-view__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+/* Sections */
+.metrics-view__section {
+  padding: 1rem;
+  background: var(--color-surface-primary, #ffffff);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 0.5rem;
+}
+
+.metrics-view__section-title {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-primary, #1e293b);
+}
+
+/* Bar Chart */
+.metrics-view__chart {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.metrics-view__bar-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.metrics-view__bar-label {
+  width: 60px;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary, #64748b);
+}
+
+.metrics-view__bar-container {
+  flex: 1;
+  height: 1.25rem;
+  background: var(--color-surface-secondary, #f8fafc);
+  border-radius: 0.25rem;
+  overflow: hidden;
+}
+
+.metrics-view__bar {
+  height: 100%;
+  border-radius: 0.25rem;
+  transition: width 0.3s ease;
+}
+
+.metrics-view__bar--critical {
+  background: var(--color-danger, #ef4444);
+}
+
+.metrics-view__bar--major {
+  background: var(--color-warning, #f59e0b);
+}
+
+.metrics-view__bar--minor {
+  background: var(--color-info, #3b82f6);
+}
+
+.metrics-view__bar-value {
+  width: 30px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary, #1e293b);
+}
+
+/* Disposition */
+.metrics-view__disposition {
+  display: flex;
+  justify-content: space-around;
+}
+
+.metrics-view__disposition-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.metrics-view__disposition-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+}
+
+.metrics-view__disposition-circle--accepted {
+  background: var(--color-success-light, #dcfce7);
+  color: var(--color-success, #22c55e);
+}
+
+.metrics-view__disposition-circle--rebutted {
+  background: var(--color-danger-light, #fef2f2);
+  color: var(--color-danger, #ef4444);
+}
+
+.metrics-view__disposition-circle--acknowledged {
+  background: var(--color-warning-light, #fffbeb);
+  color: var(--color-warning-dark, #b45309);
+}
+
+.metrics-view__disposition-value {
+  font-size: 1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.metrics-view__disposition-label {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary, #64748b);
+}
+
+.metrics-view__disposition-percent {
+  font-size: 0.6875rem;
+  color: var(--color-text-tertiary, #94a3b8);
+}
+
+/* Rounds */
+.metrics-view__rounds {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.metrics-view__round-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.metrics-view__round-label {
+  width: 60px;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary, #64748b);
+}
+
+.metrics-view__round-bar-container {
+  flex: 1;
+  height: 0.75rem;
+  background: var(--color-surface-secondary, #f8fafc);
+  border-radius: 0.25rem;
+  overflow: hidden;
+}
+
+.metrics-view__round-bar {
+  height: 100%;
+  background: var(--color-primary, #3b82f6);
+  border-radius: 0.25rem;
+  transition: width 0.3s ease;
+}
+
+.metrics-view__round-value {
+  width: 30px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary, #1e293b);
+}
+
+/* Agent Activity */
+.metrics-view__agents {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.metrics-view__agent-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: var(--color-surface-secondary, #f8fafc);
+  border-radius: 0.25rem;
+}
+
+.metrics-view__agent-indicator {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+}
+
+.metrics-view__agent-indicator--red {
+  background: var(--color-red-team, #ef4444);
+}
+
+.metrics-view__agent-indicator--blue {
+  background: var(--color-blue-team, #3b82f6);
+}
+
+.metrics-view__agent-indicator--specialist {
+  background: var(--color-specialist, #8b5cf6);
+}
+
+.metrics-view__agent-indicator--orchestrator {
+  background: var(--color-arbiter, #f59e0b);
+}
+
+.metrics-view__agent-indicator--unknown {
+  background: var(--color-text-tertiary, #94a3b8);
+}
+
+.metrics-view__agent-name {
+  flex: 1;
+  font-size: 0.8125rem;
+  color: var(--color-text-primary, #1e293b);
+}
+
+.metrics-view__agent-count {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary, #64748b);
+}
+
+.metrics-view__empty {
+  text-align: center;
+  padding: 1rem;
+  color: var(--color-text-tertiary, #94a3b8);
+  font-size: 0.875rem;
+}
+
+/* Health Assessment */
+.metrics-view__health {
+  padding: 1rem;
+  background: var(--color-surface-primary, #ffffff);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 0.5rem;
+}
+
+.metrics-view__health-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.metrics-view__health-item {
+  padding: 0.75rem;
+  background: var(--color-surface-secondary, #f8fafc);
+  border-radius: 0.375rem;
+  border-left: 3px solid transparent;
+}
+
+.metrics-view__health-item--optimal {
+  border-left-color: var(--color-success, #22c55e);
+}
+
+.metrics-view__health-item--low,
+.metrics-view__health-item--high {
+  border-left-color: var(--color-warning, #f59e0b);
+}
+
+.metrics-view__health-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.metrics-view__health-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-primary, #1e293b);
+}
+
+.metrics-view__health-status {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+}
+
+.metrics-view__health-status--optimal {
+  background: var(--color-success-light, #dcfce7);
+  color: var(--color-success, #22c55e);
+}
+
+.metrics-view__health-status--low,
+.metrics-view__health-status--high {
+  background: var(--color-warning-light, #fffbeb);
+  color: var(--color-warning-dark, #b45309);
+}
+
+.metrics-view__health-bar {
+  position: relative;
+  height: 0.5rem;
+  background: var(--color-surface-tertiary, #e2e8f0);
+  border-radius: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.metrics-view__health-optimal {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: var(--color-success-light, #dcfce7);
+  border-radius: 0.25rem;
+}
+
+.metrics-view__health-marker {
+  position: absolute;
+  top: -0.25rem;
+  width: 0.75rem;
+  height: 1rem;
+  background: var(--color-primary, #3b82f6);
+  border-radius: 0.25rem;
+  transform: translateX(-50%);
+}
+
+.metrics-view__health-description {
+  font-size: 0.6875rem;
+  color: var(--color-text-tertiary, #94a3b8);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .metrics-view__summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .metrics-view__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .metrics-view__disposition {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .metrics-view__disposition-item {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}

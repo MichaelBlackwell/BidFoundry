@@ -1,0 +1,280 @@
+/**
+ * ControlPanel Styles
+ *
+ * Styling for the generation control panel with pause/resume/cancel buttons.
+ */
+
+/* ==========================================================================
+   Base Panel
+   ========================================================================== */
+
+.control-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background-color: var(--color-bg-secondary);
+  border-top: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   Primary Actions (Left)
+   ========================================================================== */
+
+.control-panel__primary {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+/* Button Styling */
+.control-panel__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.control-panel__btn-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.control-panel__btn-label {
+  font-size: 13px;
+}
+
+/* Pause Button */
+.control-panel__btn--pause {
+  /* Uses secondary variant from Button component */
+}
+
+/* Resume Button */
+.control-panel__btn--resume {
+  /* Uses primary variant from Button component */
+}
+
+/* Skip Button */
+.control-panel__btn--skip {
+  color: var(--color-text-secondary);
+}
+
+.control-panel__btn--skip:hover {
+  color: var(--color-text-primary);
+}
+
+/* Cancel Button */
+.control-panel__btn--cancel {
+  color: var(--color-error);
+}
+
+.control-panel__btn--cancel:hover {
+  background-color: var(--color-error-bg);
+}
+
+/* Auto-scroll Button */
+.control-panel__btn--autoscroll {
+  color: var(--color-text-secondary);
+}
+
+.control-panel__btn--autoscroll:hover {
+  color: var(--color-text-primary);
+}
+
+.control-panel__btn--autoscroll-active {
+  color: var(--color-primary);
+}
+
+/* ==========================================================================
+   Info Section (Center)
+   ========================================================================== */
+
+.control-panel__info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex: 1;
+  justify-content: center;
+}
+
+.control-panel__progress {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.control-panel__progress-dot {
+  width: 6px;
+  height: 6px;
+  background-color: var(--color-success);
+  border-radius: 50%;
+  animation: pulse-progress 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-progress {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.85);
+  }
+}
+
+.control-panel__progress-paused {
+  color: var(--color-warning-text);
+  font-weight: 500;
+}
+
+.control-panel__review-notice {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-warning-text);
+  background-color: var(--color-warning-bg);
+  border-radius: var(--radius-md);
+}
+
+.control-panel__review-icon {
+  font-size: 14px;
+}
+
+/* ==========================================================================
+   Secondary Actions (Right)
+   ========================================================================== */
+
+.control-panel__secondary {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+/* Expand Button */
+.control-panel__btn--expand {
+  color: var(--color-text-secondary);
+}
+
+.control-panel__btn--expand:hover {
+  color: var(--color-text-primary);
+}
+
+/* Keyboard Shortcuts */
+.control-panel__shortcuts {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+}
+
+.control-panel__shortcuts kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  font-family: var(--font-family-mono);
+  font-size: 10px;
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 1px 0 var(--color-border);
+}
+
+/* ==========================================================================
+   Cancel Modal
+   ========================================================================== */
+
+.control-panel__cancel-modal {
+  padding: var(--spacing-sm);
+}
+
+.control-panel__cancel-message {
+  margin: 0 0 var(--spacing-lg);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.control-panel__cancel-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+}
+
+/* ==========================================================================
+   Responsive - Tablet
+   ========================================================================== */
+
+@media (max-width: 1279px) {
+  .control-panel {
+    padding: var(--spacing-sm) var(--spacing-md);
+    flex-wrap: wrap;
+  }
+
+  .control-panel__info {
+    order: -1;
+    flex-basis: 100%;
+    justify-content: flex-start;
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .control-panel__shortcuts {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   Responsive - Mobile
+   ========================================================================== */
+
+@media (max-width: 767px) {
+  .control-panel {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    gap: var(--spacing-sm);
+  }
+
+  .control-panel__btn-label {
+    display: none;
+  }
+
+  .control-panel__btn-icon {
+    font-size: 16px;
+  }
+
+  .control-panel__info {
+    margin-bottom: 0;
+    flex-basis: auto;
+    order: 0;
+  }
+
+  .control-panel__progress span:not(.control-panel__progress-dot) {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   Dark Mode
+   ========================================================================== */
+
+[data-theme='dark'] .control-panel {
+  background-color: var(--color-bg-secondary);
+}
+
+[data-theme='dark'] .control-panel__shortcuts kbd {
+  background-color: var(--color-bg-tertiary);
+}
+
+/* ==========================================================================
+   Reduced Motion
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .control-panel__progress-dot {
+    animation: none;
+  }
+}

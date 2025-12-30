@@ -1,0 +1,194 @@
+/**
+ * DebateTheater Styles
+ *
+ * Main styling for the Debate Theater component.
+ * Based on Section 4.3 of the Frontend Design Document.
+ */
+
+/* ==========================================================================
+   Base Theater Styles
+   ========================================================================== */
+
+.debate-theater {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 400px;
+  background-color: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  position: relative;
+}
+
+.debate-theater:focus {
+  outline: none;
+}
+
+.debate-theater:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-border-focus);
+}
+
+/* ==========================================================================
+   Content Area
+   ========================================================================== */
+
+.debate-theater__content {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ==========================================================================
+   Paused State
+   ========================================================================== */
+
+.debate-theater--paused {
+  opacity: 0.95;
+}
+
+.debate-theater--paused .debate-theater__content {
+  filter: blur(1px);
+  pointer-events: none;
+}
+
+/* Paused Overlay */
+.debate-theater__paused-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  padding: var(--spacing-lg) var(--spacing-xl);
+  background-color: var(--color-bg-primary);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+}
+
+.debate-theater__paused-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.debate-theater__paused-icon {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.debate-theater__paused-message > span:not(.debate-theater__paused-icon) {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.debate-theater__resume-btn {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.debate-theater__resume-btn:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.debate-theater__resume-btn:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   Keyboard Hint
+   ========================================================================== */
+
+.debate-theater__keyboard-hint {
+  position: absolute;
+  bottom: var(--spacing-sm);
+  right: var(--spacing-md);
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+  pointer-events: none;
+}
+
+.debate-theater:focus-visible .debate-theater__keyboard-hint,
+.debate-theater:hover .debate-theater__keyboard-hint {
+  opacity: 1;
+}
+
+.debate-theater__keyboard-hint kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  font-family: var(--font-family-mono);
+  font-size: 10px;
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 1px 0 var(--color-border);
+}
+
+/* ==========================================================================
+   Responsive Adjustments
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .debate-theater {
+    min-height: 300px;
+    border-radius: var(--radius-md);
+  }
+
+  .debate-theater__paused-overlay {
+    padding: var(--spacing-md) var(--spacing-lg);
+  }
+
+  .debate-theater__paused-icon {
+    font-size: 24px;
+  }
+
+  .debate-theater__keyboard-hint {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   Reduced Motion
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .debate-theater__keyboard-hint {
+    transition: none;
+  }
+
+  .debate-theater--paused .debate-theater__content {
+    filter: none;
+    opacity: 0.5;
+  }
+}
+
+/* ==========================================================================
+   Dark Mode
+   ========================================================================== */
+
+[data-theme='dark'] .debate-theater {
+  background-color: var(--color-bg-primary);
+}
+
+[data-theme='dark'] .debate-theater__paused-overlay {
+  background-color: var(--color-bg-secondary);
+}
+
+[data-theme='dark'] .debate-theater__keyboard-hint kbd {
+  background-color: var(--color-bg-secondary);
+}

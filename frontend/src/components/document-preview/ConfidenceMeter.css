@@ -1,0 +1,149 @@
+/**
+ * ConfidenceMeter Styles
+ *
+ * Visual progress bar for document confidence levels.
+ */
+
+/* ==========================================================================
+   Base Meter Styles
+   ========================================================================== */
+
+.confidence-meter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+/* ==========================================================================
+   Size Variants
+   ========================================================================== */
+
+.confidence-meter--sm {
+  font-size: 12px;
+}
+
+.confidence-meter--sm .confidence-meter__segment {
+  width: 6px;
+  height: 10px;
+}
+
+.confidence-meter--md {
+  font-size: 14px;
+}
+
+.confidence-meter--md .confidence-meter__segment {
+  width: 8px;
+  height: 14px;
+}
+
+.confidence-meter--lg {
+  font-size: 16px;
+}
+
+.confidence-meter--lg .confidence-meter__segment {
+  width: 10px;
+  height: 18px;
+}
+
+/* ==========================================================================
+   Label
+   ========================================================================== */
+
+.confidence-meter__label {
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   Bar Container
+   ========================================================================== */
+
+.confidence-meter__bar {
+  display: flex;
+  gap: 2px;
+}
+
+/* ==========================================================================
+   Segments
+   ========================================================================== */
+
+.confidence-meter__segment {
+  border-radius: 1px;
+  transition: background-color var(--transition-fast);
+}
+
+.confidence-meter__segment--empty {
+  background-color: var(--color-bg-tertiary);
+}
+
+/* High confidence (green) */
+.confidence-meter--high .confidence-meter__segment--filled {
+  background-color: var(--color-success);
+}
+
+/* Medium confidence (yellow/orange) */
+.confidence-meter--medium .confidence-meter__segment--filled {
+  background-color: var(--color-warning);
+}
+
+/* Low confidence (red) */
+.confidence-meter--low .confidence-meter__segment--filled {
+  background-color: var(--color-danger);
+}
+
+/* ==========================================================================
+   Value Display
+   ========================================================================== */
+
+.confidence-meter__value {
+  font-weight: 600;
+  font-family: var(--font-family-mono);
+  min-width: 3ch;
+  text-align: right;
+}
+
+.confidence-meter--high .confidence-meter__value {
+  color: var(--color-success);
+}
+
+.confidence-meter--medium .confidence-meter__value {
+  color: var(--color-warning);
+}
+
+.confidence-meter--low .confidence-meter__value {
+  color: var(--color-danger);
+}
+
+/* ==========================================================================
+   Dark Mode
+   ========================================================================== */
+
+[data-theme='dark'] .confidence-meter__segment--empty {
+  background-color: var(--color-bg-secondary);
+}
+
+/* ==========================================================================
+   High Contrast Mode
+   ========================================================================== */
+
+@media (forced-colors: active) {
+  .confidence-meter__segment--filled {
+    background-color: Highlight;
+    forced-color-adjust: none;
+  }
+
+  .confidence-meter__segment--empty {
+    background-color: GrayText;
+    forced-color-adjust: none;
+  }
+}
+
+/* ==========================================================================
+   Reduced Motion
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .confidence-meter__segment {
+    transition: none;
+  }
+}

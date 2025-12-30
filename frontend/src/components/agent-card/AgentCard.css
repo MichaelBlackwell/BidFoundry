@@ -1,0 +1,366 @@
+/**
+ * AgentCard Styles
+ *
+ * Styling for the agent card component with support for:
+ * - Multiple states (idle, thinking, typing, complete, waiting)
+ * - Agent categories (blue, red, specialist, orchestrator)
+ * - Responsive layout
+ * - Accessibility (reduced motion support)
+ */
+
+/* ==========================================================================
+   Base Card Styles
+   ========================================================================== */
+
+.agent-card {
+  position: relative;
+  background-color: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
+  transition:
+    border-color var(--transition-normal),
+    box-shadow var(--transition-normal),
+    opacity var(--transition-normal);
+}
+
+.agent-card:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+/* Interactive card (complete state with onExpand) */
+.agent-card[role="button"] {
+  cursor: pointer;
+}
+
+.agent-card[role="button"]:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* ==========================================================================
+   State Variations
+   ========================================================================== */
+
+/* Idle state - subtle, grayed out */
+.agent-card--idle {
+  opacity: 0.6;
+  border-style: dashed;
+}
+
+/* Thinking state - pulsing border */
+.agent-card--thinking {
+  border-width: 2px;
+  animation: agent-card-pulse 2s ease-in-out infinite;
+}
+
+@keyframes agent-card-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 var(--agent-color, var(--color-primary));
+  }
+  50% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--agent-color, var(--color-primary)) 20%, transparent);
+  }
+}
+
+/* Typing state - active border with gradient */
+.agent-card--typing {
+  border-width: 2px;
+  border-color: var(--agent-color, var(--color-primary));
+}
+
+/* Complete state - solid border */
+.agent-card--complete {
+  border-color: var(--agent-color, var(--color-primary));
+}
+
+/* Waiting state - dimmed */
+.agent-card--waiting {
+  opacity: 0.5;
+}
+
+/* Expanded state */
+.agent-card--expanded {
+  box-shadow: var(--shadow-lg);
+}
+
+/* ==========================================================================
+   Category Variations (Agent Colors)
+   ========================================================================== */
+
+.agent-card--blue {
+  --agent-color: var(--color-blue-team);
+}
+
+.agent-card--red {
+  --agent-color: var(--color-red-team);
+}
+
+.agent-card--specialist {
+  --agent-color: var(--color-specialist);
+}
+
+.agent-card--orchestrator {
+  --agent-color: var(--color-arbiter);
+}
+
+/* Category-specific border colors */
+.agent-card--thinking.agent-card--blue,
+.agent-card--typing.agent-card--blue,
+.agent-card--complete.agent-card--blue {
+  border-color: var(--color-blue-team);
+}
+
+.agent-card--thinking.agent-card--red,
+.agent-card--typing.agent-card--red,
+.agent-card--complete.agent-card--red {
+  border-color: var(--color-red-team);
+}
+
+.agent-card--thinking.agent-card--specialist,
+.agent-card--typing.agent-card--specialist,
+.agent-card--complete.agent-card--specialist {
+  border-color: var(--color-specialist);
+}
+
+.agent-card--thinking.agent-card--orchestrator,
+.agent-card--typing.agent-card--orchestrator,
+.agent-card--complete.agent-card--orchestrator {
+  border-color: var(--color-arbiter);
+}
+
+/* ==========================================================================
+   Header Styles
+   ========================================================================== */
+
+.agent-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+}
+
+.agent-card__identity {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.agent-card__name-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.agent-card__name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.agent-card__role {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  line-height: 1.2;
+}
+
+/* ==========================================================================
+   Divider
+   ========================================================================== */
+
+.agent-card__divider {
+  height: 1px;
+  background-color: var(--color-border);
+  margin: var(--spacing-sm) 0;
+}
+
+/* ==========================================================================
+   Target Section
+   ========================================================================== */
+
+.agent-card__target {
+  display: flex;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-sm);
+  font-size: 12px;
+}
+
+.agent-card__target-label {
+  color: var(--color-text-tertiary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.agent-card__target-value {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+/* ==========================================================================
+   Content Area
+   ========================================================================== */
+
+.agent-card__content {
+  min-height: 40px;
+}
+
+/* State text (shown during non-content states) */
+.agent-card__state-text {
+  font-size: 13px;
+  color: var(--color-text-tertiary);
+  font-style: italic;
+}
+
+/* Thinking state with animated dots */
+.agent-card__thinking {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.agent-card__thinking-dots {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.agent-card__thinking-dots span {
+  width: 6px;
+  height: 6px;
+  background-color: var(--agent-color, var(--color-primary));
+  border-radius: 50%;
+  animation: thinking-bounce 1.4s ease-in-out infinite both;
+}
+
+.agent-card__thinking-dots span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.agent-card__thinking-dots span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+.agent-card__thinking-dots span:nth-child(3) {
+  animation-delay: 0s;
+}
+
+@keyframes thinking-bounce {
+  0%, 80%, 100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Waiting state */
+.agent-card__waiting {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+/* Idle state */
+.agent-card__idle {
+  display: flex;
+  align-items: center;
+}
+
+/* ==========================================================================
+   Suggested Remedy
+   ========================================================================== */
+
+.agent-card__remedy {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-sm);
+  border-top: 1px dashed var(--color-border);
+}
+
+.agent-card__remedy-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: var(--spacing-xs);
+}
+
+.agent-card__remedy-text {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ==========================================================================
+   Footer / Timestamp
+   ========================================================================== */
+
+.agent-card__footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--spacing-sm);
+}
+
+.agent-card__timestamp {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  font-family: var(--font-family-mono);
+}
+
+/* ==========================================================================
+   Accessibility - Visually Hidden
+   ========================================================================== */
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ==========================================================================
+   Reduced Motion
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-card--thinking {
+    animation: none;
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--agent-color, var(--color-primary)) 30%, transparent);
+  }
+
+  .agent-card__thinking-dots span {
+    animation: none;
+    opacity: 0.7;
+  }
+
+  .agent-card {
+    transition: none;
+  }
+}
+
+/* ==========================================================================
+   Dark Mode Adjustments
+   ========================================================================== */
+
+[data-theme='dark'] .agent-card {
+  background-color: var(--color-bg-secondary);
+}
+
+[data-theme='dark'] .agent-card--idle {
+  opacity: 0.5;
+}
+
+[data-theme='dark'] .agent-card:hover {
+  background-color: var(--color-bg-tertiary);
+}

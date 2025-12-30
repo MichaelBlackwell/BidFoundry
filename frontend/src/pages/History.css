@@ -1,0 +1,55 @@
+/* History Page Styles */
+
+.history-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Header */
+.history-page__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.history-page__intro {
+  flex: 1;
+  min-width: 280px;
+}
+
+.history-page__description {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary, #6b7280);
+  line-height: 1.5;
+}
+
+.history-page__actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+/* Load More */
+.history-page__load-more {
+  display: flex;
+  justify-content: center;
+  padding: 1rem 0;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .history-page__header {
+    flex-direction: column;
+  }
+
+  .history-page__actions {
+    width: 100%;
+  }
+
+  .history-page__actions .btn {
+    flex: 1;
+  }
+}

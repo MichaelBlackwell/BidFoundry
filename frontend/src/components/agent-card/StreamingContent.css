@@ -1,0 +1,138 @@
+/**
+ * StreamingContent Styles
+ */
+
+.streaming-content {
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+.streaming-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.streaming-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.streaming-content::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 3px;
+}
+
+.streaming-content::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-text-tertiary);
+}
+
+/* ==========================================================================
+   Text Content
+   ========================================================================== */
+
+.streaming-content__text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--color-text-primary);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* Quoted text styling */
+.streaming-content__text::before {
+  content: '"';
+  color: var(--color-text-tertiary);
+}
+
+.streaming-content__text::after {
+  content: '"';
+  color: var(--color-text-tertiary);
+}
+
+/* Active streaming state removes after quote */
+.streaming-content--active .streaming-content__text::after {
+  content: '';
+}
+
+/* ==========================================================================
+   Blinking Cursor
+   ========================================================================== */
+
+.streaming-content__cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background-color: var(--color-text-primary);
+  margin-left: 1px;
+  vertical-align: text-bottom;
+  animation: cursor-blink 1s step-end infinite;
+}
+
+@keyframes cursor-blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+/* ==========================================================================
+   Scroll Anchor
+   ========================================================================== */
+
+.streaming-content__scroll-anchor {
+  display: inline-block;
+  width: 0;
+  height: 0;
+}
+
+/* ==========================================================================
+   Reduced Motion
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .streaming-content__cursor {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* ==========================================================================
+   Dark Mode
+   ========================================================================== */
+
+[data-theme='dark'] .streaming-content::-webkit-scrollbar-thumb {
+  background-color: var(--color-text-tertiary);
+}
+
+[data-theme='dark'] .streaming-content::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-text-secondary);
+}
+
+/* ==========================================================================
+   Expand Button
+   ========================================================================== */
+
+.streaming-content__expand-btn {
+  display: inline-block;
+  margin-top: var(--spacing-xs);
+  padding: 0;
+  background: none;
+  border: none;
+  font-size: 12px;
+  color: var(--color-primary);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.streaming-content__expand-btn:hover {
+  color: var(--color-primary-hover);
+}
+
+.streaming-content__expand-btn:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+  border-radius: 2px;
+}

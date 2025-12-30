@@ -1,0 +1,111 @@
+/**
+ * SectionList Styles
+ *
+ * Styling for the scrollable list of document sections.
+ */
+
+/* ==========================================================================
+   Base List Styles
+   ========================================================================== */
+
+.section-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--spacing-sm);
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+.section-list:focus {
+  outline: none;
+}
+
+.section-list:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--color-border-focus);
+  border-radius: var(--radius-sm);
+}
+
+/* Webkit Scrollbar Styling */
+.section-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.section-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.section-list::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 3px;
+}
+
+.section-list::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-border-hover);
+}
+
+/* ==========================================================================
+   List Items
+   ========================================================================== */
+
+.section-list__item {
+  /* Container for section card, provides role=option context */
+}
+
+.section-list__item[aria-selected='true'] {
+  /* Visual indicator handled by SectionCard */
+}
+
+/* ==========================================================================
+   Empty State
+   ========================================================================== */
+
+.section-list--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+.section-list__empty-message {
+  margin: 0;
+  padding: var(--spacing-lg);
+  font-size: 14px;
+  color: var(--color-text-tertiary);
+  text-align: center;
+}
+
+/* ==========================================================================
+   Dark Mode
+   ========================================================================== */
+
+[data-theme='dark'] .section-list {
+  scrollbar-color: var(--color-border-hover) transparent;
+}
+
+[data-theme='dark'] .section-list::-webkit-scrollbar-thumb {
+  background-color: var(--color-border-hover);
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .section-list {
+    padding: var(--spacing-xs);
+    gap: var(--spacing-xs);
+  }
+}
+
+/* ==========================================================================
+   Reduced Motion
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .section-list {
+    scroll-behavior: auto;
+  }
+}

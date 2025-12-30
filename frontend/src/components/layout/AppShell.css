@@ -1,0 +1,156 @@
+.app-shell {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: var(--color-bg-primary);
+}
+
+.main-workspace {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: margin-left 0.2s ease;
+}
+
+/* Skip link target - enable focus for programmatic focus */
+.main-workspace:focus {
+  outline: none;
+}
+
+/* Sidebar collapsed state */
+.app-shell.sidebar-collapsed .main-workspace {
+  margin-left: 0;
+}
+
+/* ============================================================================
+   Reduced Motion Preferences
+   ============================================================================ */
+
+.app-shell.reduce-motion,
+.app-shell.reduce-motion *,
+.app-shell.reduce-motion *::before,
+.app-shell.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* ============================================================================
+   Responsive Layout - Tablet (768px - 1279px)
+   ============================================================================ */
+
+.app-shell.is-tablet {
+  flex-direction: column;
+}
+
+.app-shell.is-tablet .sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: var(--z-modal);
+  transform: translateX(-100%);
+  transition: transform 0.2s ease;
+}
+
+.app-shell.is-tablet .sidebar:not(.sidebar--collapsed) {
+  transform: translateX(0);
+}
+
+.app-shell.is-tablet .main-workspace {
+  margin-left: 0;
+}
+
+/* Mobile navigation toggle for tablet */
+.app-shell.is-tablet .mobile-nav-toggle {
+  display: flex;
+}
+
+/* ============================================================================
+   Responsive Layout - Mobile (<768px)
+   ============================================================================ */
+
+.app-shell.is-mobile .sidebar {
+  display: none;
+}
+
+.app-shell.is-mobile .main-workspace {
+  margin-left: 0;
+  padding: var(--spacing-md);
+}
+
+/* Mobile header bar */
+.mobile-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  background-color: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.app-shell.is-mobile .mobile-header,
+.app-shell.is-tablet .mobile-header {
+  display: flex;
+}
+
+.mobile-header__logo {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.mobile-header__menu {
+  padding: var(--spacing-sm);
+  background: none;
+  border: none;
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+/* Mobile generation disabled message */
+.mobile-generation-disabled {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  text-align: center;
+  min-height: 300px;
+}
+
+.mobile-generation-disabled__icon {
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--spacing-lg);
+}
+
+.mobile-generation-disabled__title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.mobile-generation-disabled__message {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  max-width: 300px;
+  line-height: 1.5;
+}
+
+/* ============================================================================
+   Focus Management
+   ============================================================================ */
+
+/* Ensure visible focus states for keyboard navigation */
+.app-shell :focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+/* Remove default focus outline for mouse users */
+.app-shell :focus:not(:focus-visible) {
+  outline: none;
+}

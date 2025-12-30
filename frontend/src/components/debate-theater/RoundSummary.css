@@ -1,0 +1,170 @@
+/**
+ * RoundSummary Styles
+ *
+ * Styling for the round summary component in the Debate Theater.
+ */
+
+/* ==========================================================================
+   Base Summary Styles
+   ========================================================================== */
+
+.round-summary {
+  padding: var(--spacing-md);
+  background-color: var(--color-bg-secondary);
+  border-top: 1px solid var(--color-border);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+.round-summary--active {
+  background-color: var(--color-bg-tertiary);
+}
+
+/* ==========================================================================
+   Divider
+   ========================================================================== */
+
+.round-summary__divider {
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--color-border),
+    var(--color-border),
+    transparent
+  );
+  margin-bottom: var(--spacing-md);
+}
+
+/* ==========================================================================
+   Content Layout
+   ========================================================================== */
+
+.round-summary__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+/* ==========================================================================
+   Critiques Summary
+   ========================================================================== */
+
+.round-summary__critiques {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-xs);
+  font-size: 13px;
+}
+
+.round-summary__label {
+  color: var(--color-text-tertiary);
+  font-weight: 500;
+}
+
+.round-summary__value {
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+.round-summary__breakdown {
+  color: var(--color-text-secondary);
+  font-weight: 400;
+}
+
+/* ==========================================================================
+   Severity Pills
+   ========================================================================== */
+
+.round-summary__severity-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-xs);
+}
+
+.round-summary__pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: var(--radius-xl);
+  background-color: color-mix(in srgb, var(--pill-color) 15%, transparent);
+  color: var(--pill-color);
+  letter-spacing: 0.01em;
+}
+
+.round-summary__pill--critical {
+  --pill-color: var(--color-severity-critical);
+}
+
+.round-summary__pill--major {
+  --pill-color: var(--color-severity-major);
+}
+
+.round-summary__pill--minor {
+  --pill-color: var(--color-severity-minor);
+}
+
+/* ==========================================================================
+   Agent Progress
+   ========================================================================== */
+
+.round-summary__agents {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-xs);
+  font-size: 13px;
+  margin-top: var(--spacing-xs);
+}
+
+.round-summary__pending {
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+  font-style: italic;
+}
+
+/* ==========================================================================
+   Progress Bar
+   ========================================================================== */
+
+.round-summary__progress {
+  height: 3px;
+  background-color: var(--color-bg-primary);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: var(--spacing-xs);
+}
+
+.round-summary__progress-fill {
+  height: 100%;
+  background-color: var(--color-primary);
+  border-radius: 2px;
+  transition: width var(--transition-normal);
+}
+
+/* ==========================================================================
+   Reduced Motion
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .round-summary__progress-fill {
+    transition: none;
+  }
+}
+
+/* ==========================================================================
+   Dark Mode
+   ========================================================================== */
+
+[data-theme='dark'] .round-summary {
+  background-color: var(--color-bg-secondary);
+}
+
+[data-theme='dark'] .round-summary--active {
+  background-color: var(--color-bg-tertiary);
+}
+
+[data-theme='dark'] .round-summary__progress {
+  background-color: var(--color-bg-primary);
+}

@@ -1,0 +1,189 @@
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* Allow flex shrinking for proper scrolling */
+}
+
+.profile-form__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+  /* Scrolling is handled by the modal body */
+}
+
+.profile-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.profile-form__label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.profile-form__hint {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+}
+
+.profile-form__hint--block {
+  display: block;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background-color: var(--color-bg-secondary, #1e1e1e);
+  border-radius: var(--radius-md, 6px);
+  border-left: 3px solid var(--color-border, #404040);
+}
+
+/* Collapsible Sections */
+.profile-form__section {
+  border: 1px solid var(--color-border, #404040);
+  border-radius: var(--radius-md, 6px);
+  overflow: hidden;
+}
+
+.profile-form__section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 12px 16px;
+  background-color: var(--color-bg-secondary, #1e1e1e);
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.profile-form__section-header:hover {
+  background-color: var(--color-bg-tertiary, #2a2a2a);
+}
+
+.profile-form__section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary, #e0e0e0);
+}
+
+.profile-form__section-icon {
+  font-size: 18px;
+  color: var(--color-text-secondary, #888);
+  font-weight: 300;
+}
+
+.profile-form__section-content {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-top: 1px solid var(--color-border, #404040);
+  background-color: var(--color-bg-primary, #121212);
+}
+
+.profile-form__section--expanded .profile-form__section-header {
+  background-color: var(--color-bg-tertiary, #2a2a2a);
+}
+
+/* Row layout for side-by-side fields */
+.profile-form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.profile-form__row--address {
+  grid-template-columns: 2fr 1fr 1fr;
+}
+
+/* Checkbox field alignment */
+.profile-form__checkbox-field {
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 8px;
+}
+
+/* List sections (owners, managers) */
+.profile-form__list-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.profile-form__list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.profile-form__list-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary, #e0e0e0);
+}
+
+.profile-form__list-item {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background-color: var(--color-bg-secondary, #1e1e1e);
+  border-radius: var(--radius-md, 6px);
+  border: 1px solid var(--color-border, #404040);
+}
+
+.profile-form__empty-message {
+  font-size: 13px;
+  color: var(--color-text-tertiary, #666);
+  font-style: italic;
+  text-align: center;
+  padding: 16px;
+}
+
+/* Owner flags grid */
+.profile-form__owner-flags {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  padding: 8px 0;
+}
+
+/* Divider between sections */
+.profile-form__divider {
+  height: 1px;
+  background-color: var(--color-border, #404040);
+  margin: 8px 0;
+}
+
+/* Socioeconomic status */
+.profile-form__socioeconomic {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.profile-form__checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .profile-form__row {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-form__row--address {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-form__owner-flags {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-form__checkbox-grid {
+    grid-template-columns: 1fr;
+  }
+}

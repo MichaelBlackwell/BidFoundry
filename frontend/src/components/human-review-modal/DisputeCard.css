@@ -1,0 +1,118 @@
+.dispute-card {
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.dispute-card__header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-bg-tertiary);
+}
+
+.dispute-card__title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dispute-card__number {
+  color: var(--color-text-tertiary);
+  font-weight: 500;
+}
+
+.dispute-card__body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Position Blocks */
+.dispute-card__position {
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background-color: var(--color-bg-primary);
+}
+
+.dispute-card__position--red {
+  border-left: 3px solid var(--color-red-team);
+}
+
+.dispute-card__position--blue {
+  border-left: 3px solid var(--color-blue-team);
+}
+
+.dispute-card__position-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.dispute-card__team-icon {
+  font-size: 12px;
+}
+
+.dispute-card__team-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dispute-card__position--red .dispute-card__team-label {
+  color: var(--color-red-text);
+}
+
+.dispute-card__position--blue .dispute-card__team-label {
+  color: var(--color-blue-text);
+}
+
+.dispute-card__position-content {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-text-primary);
+  font-style: italic;
+}
+
+/* Arbiter Note */
+.dispute-card__arbiter {
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background-color: var(--color-gold-bg);
+  border-left: 3px solid var(--color-arbiter);
+}
+
+.dispute-card__arbiter-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.dispute-card__arbiter-icon {
+  font-size: 14px;
+}
+
+.dispute-card__arbiter-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-gold-text);
+}
+
+.dispute-card__arbiter-content {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-text-primary);
+  font-style: italic;
+}

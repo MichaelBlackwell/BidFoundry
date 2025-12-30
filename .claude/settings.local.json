@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(python -m pytest:*)",
+      "Bash(pip install:*)",
+      "Bash(cat:*)",
+      "Bash(python:*)",
+      "Bash(npm create:*)",
+      "Bash(npm install)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(dir:*)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(npx tsc:*)",
+      "Bash(findstr:*)",
+      "Bash(curl:*)",
+      "Bash(set PYTHONPATH=.)",
+      "Bash(netstat:*)",
+      "Bash(cd /d d:ShawarmAgen)",
+      "Bash(tree /L 3)",
+      "Bash(wc -l agents/blue/*.py server/api/*.py frontend/src/components/**/*.tsx)",
+      "Bash(cd:*)",
+      "Bash(done)",
+      "Bash(wc -l agents/blue/*.py agents/red/*.py agents/orchestrator/*.py)",
+      "Bash(find:*)",
+      "Bash(tree:*)",
+      "Bash(timeout 120 python -m pytest:*)"
+    ]
+  }
+}

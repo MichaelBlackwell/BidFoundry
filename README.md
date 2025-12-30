@@ -1,0 +1,269 @@
+# ShawarmAgen
+
+An Adversarial Agentic Swarm system for generating high-quality government contracting strategy documents. The system uses a red team/blue team approach where multiple AI agents debate and challenge each other to produce comprehensive business strategy documents.
+
+## Target Users
+
+- Small businesses (< 500 employees) pursuing government contracts
+- Companies new to GovCon (government contracting)
+- Business development and capture teams
+
+## Document Types Generated
+
+- Capability Statements
+- Competitive Analysis
+- SWOT Analysis
+- BD Pipeline Plans
+- Proposal Strategy Outlines
+- Go-to-Market Strategies
+- Teaming Strategies
+
+---
+
+## Prerequisites
+
+- **Python 3.10+** (for backend)
+- **Node.js 18+** (for frontend)
+- **Anthropic API Key** (required for AI agents)
+
+---
+
+## Quick Start
+
+### 1. Clone and Setup Environment Variables
+
+```bash
+# Copy the example environment file
+cp .env.example .env
+```
+
+Edit the `.env` file and add your API key:
+
+```bash
+# Required - Anthropic API Key
+ANTHROPIC_API_KEY=sk-ant-your-key-here
+
+# Server Configuration
+HOST=0.0.0.0
+PORT=8000
+DEBUG=true
+CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+
+# Database (SQLite by default)
+DATABASE_URL=sqlite+aiosqlite:///./data/swarm.db
+
+# Export Configuration
+EXPORT_TEMP_DIR=./data/exports
+MAX_EXPORT_SIZE_MB=50
+```
+
+### 2. Start the Backend Server
+
+```bash
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Start the server
+python run_server.py
+python -m uvicorn server.main:app --host localhost --port 8000 --reload
+```
+
+The backend will be available at:
+- **REST API**: http://localhost:8000/api
+- **API Documentation**: http://localhost:8000/docs
+- **Health Check**: http://localhost:8000/health
+- **WebSocket**: ws://localhost:8000/ws
+
+### 3. Start the Frontend Development Server
+
+Open a new terminal:
+
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+```
+
+The frontend will be available at: http://localhost:5173
+
+---
+
+## API Key Configuration
+
+### Anthropic API Key (Required)
+
+The system uses Anthropic's Claude models for all AI agent reasoning. You need a valid Anthropic API key.
+
+**Where to get it:**
+1. Go to https://console.anthropic.com/
+2. Create an account or sign in
+3. Navigate to API Keys
+4. Create a new API key
+
+**Where to place it:**
+
+| Location | Variable | Description |
+|----------|----------|-------------|
+| `.env` (root) | `ANTHROPIC_API_KEY` | Main configuration file |
+
+The API key is read by the agent system in [agents/config.py](agents/config.py) which sets:
+- Default model: `claude-sonnet-4-20250514`
+- Environment variable: `ANTHROPIC_API_KEY`
+
+### Frontend Environment Variables (Optional)
+
+Create a `.env` or `.env.local` file in the `frontend/` directory:
+
+```bash
+VITE_API_URL=http://localhost:8000/api
+VITE_WS_URL=ws://localhost:8000/ws
+VITE_MOCK_API=false
+```
+
+These default values work out of the box for local development.
+
+---
+
+## Project Structure
+
+```
+ShawarmAgen/
+├── frontend/                 # React + TypeScript + Vite frontend
+│   ├── src/
+│   │   ├── api/             # API service layer
+│   │   ├── components/      # React components
+│   │   ├── pages/           # Page components
+│   │   ├── providers/       # Context providers (WebSocket, etc.)
+│   │   ├── stores/          # Zustand state management
+│   │   └── types/           # TypeScript definitions
+│   └── package.json
+│
+├── server/                   # FastAPI Python backend
+│   ├── api/                 # REST API endpoints
+│   ├── services/            # Business logic
+│   ├── websocket/           # WebSocket handlers
+│   ├── models/              # Database models
+│   ├── main.py              # FastAPI entry point
+│   └── config.py            # Server configuration
+│
+├── agents/                   # AI Agent system
+│   ├── blue/                # Blue team (builders)
+│   ├── red/                 # Red team (challengers)
+│   ├── orchestrator/        # Workflow orchestration
+│   ├── config.py            # LLM configuration
+│   └── base.py              # Base agent class
+│
+├── models/                   # Shared data models
+├── comms/                    # Inter-agent communication
+├── data/                     # Database and exports
+├── .env.example             # Environment template
+├── requirements.txt         # Python dependencies
+└── run_server.py            # Server startup script
+```
+
+---
+
+## Running Both Servers
+
+### Development Mode
+
+**Terminal 1 - Backend:**
+```bash
+python run_server.py
+```
+
+**Terminal 2 - Frontend:**
+```bash
+cd frontend
+npm run dev
+```
+
+### Alternative Backend Start Methods
+
+```bash
+# Direct uvicorn with hot reload
+uvicorn server.main:app --host 0.0.0.0 --port 8000 --reload
+
+# Production mode (no reload)
+uvicorn server.main:app --host 0.0.0.0 --port 8000
+```
+
+### Production Frontend Build
+
+```bash
+cd frontend
+npm run build      # Creates production build in dist/
+npm run preview    # Preview the production build
+```
+
+---
+
+## Technology Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 19, TypeScript, Vite, React Router, TanStack Query, Zustand |
+| Backend | FastAPI, Uvicorn, SQLAlchemy, Pydantic |
+| Database | SQLite (dev) / PostgreSQL (production) |
+| LLM | Anthropic Claude (claude-sonnet-4-20250514) |
+| Real-time | WebSocket for agent streaming |
+| Document Export | python-docx, reportlab, markdown |
+
+---
+
+## How It Works
+
+The system uses an adversarial multi-agent workflow:
+
+1. **Blue Team Build** - Blue team agents (Strategy Architect, Market Analyst, etc.) generate initial document drafts
+2. **Red Team Attack** - Red team agents (Devil's Advocate, Competitor Simulator, etc.) critique and challenge the draft
+3. **Blue Team Defense** - Blue team responds to critiques and strengthens the document
+4. **Synthesis** - The Arbiter agent synthesizes all inputs into the final output
+
+Real-time updates are streamed via WebSocket, allowing users to watch the "debate" between agents.
+
+---
+
+## Troubleshooting
+
+### Backend won't start
+
+1. Ensure Python 3.10+ is installed: `python --version`
+2. Install dependencies: `pip install -r requirements.txt`
+3. Check that `.env` file exists with `ANTHROPIC_API_KEY` set
+
+### Frontend won't connect to backend
+
+1. Ensure backend is running on port 8000
+2. Check CORS settings in `.env`: `CORS_ORIGINS=http://localhost:5173`
+3. Verify WebSocket URL in frontend matches backend
+
+### API Key errors
+
+1. Verify your Anthropic API key is valid
+2. Ensure no extra whitespace in the `.env` file
+3. Check that the key starts with `sk-ant-`
+
+### Database errors
+
+1. Ensure the `data/` directory exists
+2. For fresh start, delete `data/swarm.db` and restart server
+
+---
+
+## Documentation
+
+- [Adversarial Swarm Design](adversarial-swarm-design-doc.md) - System architecture and agent design
+- [Backend Server Design](backend-server-design-doc.md) - API and service layer design
+- [Frontend Design](frontend-design-doc.md) - UI/UX and component architecture
+- [Implementation Roadmap](implementation-chunks.md) - Development phases and milestones
+
+---
+
+## License
+
+[Add your license here]

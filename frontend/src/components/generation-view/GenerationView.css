@@ -1,0 +1,413 @@
+/**
+ * GenerationView Styles
+ *
+ * Main styling for the combined generation view with debate theater and preview.
+ * Based on Section 4 and F8 of the Frontend Design Document.
+ */
+
+/* ==========================================================================
+   Base Container
+   ========================================================================== */
+
+.generation-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 500px;
+  background-color: var(--color-bg-primary);
+  position: relative;
+}
+
+/* ==========================================================================
+   Main Content Area (Split Panes)
+   ========================================================================== */
+
+.generation-view__content {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Debate Theater Pane */
+.generation-view__debate-pane {
+  height: 100%;
+  min-width: 300px;
+  overflow: hidden;
+  transition: width 0.15s ease-out;
+}
+
+.generation-view__debate-pane .debate-theater {
+  height: 100%;
+  border-radius: 0;
+  border: none;
+  border-right: 1px solid var(--color-border);
+}
+
+/* Preview Pane */
+.generation-view__preview-pane {
+  height: 100%;
+  min-width: 250px;
+  overflow: hidden;
+  transition: width 0.15s ease-out;
+}
+
+.generation-view__preview-pane .document-preview {
+  height: 100%;
+  border-radius: 0;
+  border: none;
+}
+
+/* Active pane indicator */
+.generation-view__pane--active {
+  box-shadow: inset 0 0 0 2px var(--color-primary-light);
+}
+
+/* ==========================================================================
+   Resize Handle
+   ========================================================================== */
+
+.generation-view__resize-handle {
+  width: 8px;
+  flex-shrink: 0;
+  background-color: var(--color-bg-secondary);
+  border-left: 1px solid var(--color-border);
+  border-right: 1px solid var(--color-border);
+  cursor: col-resize;
+  position: relative;
+  transition: background-color var(--transition-fast);
+}
+
+.generation-view__resize-handle:hover,
+.generation-view__resize-handle:active {
+  background-color: var(--color-primary-light);
+}
+
+.generation-view__resize-handle::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 4px;
+  height: 32px;
+  background-color: var(--color-border);
+  border-radius: 2px;
+}
+
+.generation-view__resize-handle:focus {
+  outline: none;
+  background-color: var(--color-primary-light);
+}
+
+.generation-view__resize-handle:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-border-focus);
+}
+
+/* ==========================================================================
+   Preview Overlay (Expanded)
+   ========================================================================== */
+
+.generation-view__preview-overlay {
+  position: fixed;
+  top: var(--spacing-lg);
+  left: var(--spacing-lg);
+  right: var(--spacing-lg);
+  bottom: var(--spacing-lg);
+  z-index: 1000;
+  background-color: var(--color-bg-primary);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+}
+
+.generation-view__preview-overlay::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: -1;
+}
+
+.generation-view__preview-overlay .document-preview {
+  height: 100%;
+  border-radius: var(--radius-xl);
+}
+
+/* ==========================================================================
+   Paused State
+   ========================================================================== */
+
+.generation-view--paused .generation-view__content {
+  opacity: 0.9;
+}
+
+/* ==========================================================================
+   Error State
+   ========================================================================== */
+
+.generation-view--error {
+  justify-content: center;
+  align-items: center;
+}
+
+.generation-view__error {
+  text-align: center;
+  padding: var(--spacing-xl);
+  max-width: 400px;
+}
+
+.generation-view__error-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  font-size: 24px;
+  font-weight: bold;
+  color: white;
+  background-color: var(--color-error);
+  border-radius: 50%;
+  margin-bottom: var(--spacing-lg);
+}
+
+.generation-view__error-title {
+  margin: 0 0 var(--spacing-md);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.generation-view__error-message {
+  margin: 0 0 var(--spacing-lg);
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.generation-view__error-retry {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.generation-view__error-retry:hover {
+  background-color: var(--color-primary-hover);
+}
+
+/* ==========================================================================
+   Idle State
+   ========================================================================== */
+
+.generation-view--idle {
+  justify-content: center;
+  align-items: center;
+}
+
+.generation-view__idle {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--color-text-tertiary);
+}
+
+/* ==========================================================================
+   Connection Warning
+   ========================================================================== */
+
+.generation-view__connection-warning {
+  position: fixed;
+  top: var(--spacing-md);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background-color: var(--color-warning-bg);
+  border: 1px solid var(--color-warning);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  color: var(--color-warning-text);
+  box-shadow: var(--shadow-lg);
+  animation: slide-down 0.3s ease-out;
+}
+
+.generation-view__connection-warning-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--color-warning);
+  background-color: white;
+  border-radius: 50%;
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* ==========================================================================
+   Keyboard Shortcuts Hint
+   ========================================================================== */
+
+.generation-view__shortcuts-hint {
+  position: absolute;
+  bottom: var(--spacing-sm);
+  right: var(--spacing-md);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+  pointer-events: none;
+}
+
+.generation-view:hover .generation-view__shortcuts-hint,
+.generation-view:focus-within .generation-view__shortcuts-hint {
+  opacity: 1;
+}
+
+.generation-view__shortcuts-hint kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  margin-right: 4px;
+  font-family: var(--font-family-mono);
+  font-size: 10px;
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 1px 0 var(--color-border);
+}
+
+/* ==========================================================================
+   Responsive - Tablet
+   ========================================================================== */
+
+@media (max-width: 1279px) {
+  .generation-view__content {
+    flex-direction: column;
+  }
+
+  .generation-view__debate-pane,
+  .generation-view__preview-pane {
+    width: 100% !important;
+    min-width: 0;
+  }
+
+  .generation-view__debate-pane {
+    flex: 1;
+    min-height: 300px;
+  }
+
+  .generation-view__debate-pane .debate-theater {
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .generation-view__preview-pane {
+    height: 250px;
+    flex-shrink: 0;
+  }
+
+  .generation-view__resize-handle {
+    display: none;
+  }
+
+  .generation-view__preview-overlay {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 0;
+  }
+}
+
+/* ==========================================================================
+   Responsive - Mobile
+   ========================================================================== */
+
+@media (max-width: 767px) {
+  .generation-view {
+    min-height: 400px;
+  }
+
+  .generation-view__preview-pane {
+    display: none;
+  }
+
+  .generation-view__debate-pane {
+    width: 100% !important;
+    flex: 1;
+  }
+
+  .generation-view__shortcuts-hint {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   Dark Mode
+   ========================================================================== */
+
+[data-theme='dark'] .generation-view {
+  background-color: var(--color-bg-primary);
+}
+
+[data-theme='dark'] .generation-view__resize-handle {
+  background-color: var(--color-bg-secondary);
+}
+
+[data-theme='dark'] .generation-view__resize-handle:hover,
+[data-theme='dark'] .generation-view__resize-handle:active {
+  background-color: var(--color-bg-tertiary);
+}
+
+[data-theme='dark'] .generation-view__preview-overlay::before {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+[data-theme='dark'] .generation-view__connection-warning {
+  background-color: var(--color-warning-bg);
+  border-color: var(--color-warning);
+}
+
+/* ==========================================================================
+   Reduced Motion
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .generation-view__debate-pane,
+  .generation-view__preview-pane {
+    transition: none;
+  }
+
+  .generation-view__connection-warning {
+    animation: none;
+  }
+
+  .generation-view__shortcuts-hint {
+    transition: none;
+  }
+}

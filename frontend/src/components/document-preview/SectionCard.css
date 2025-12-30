@@ -1,0 +1,262 @@
+/**
+ * SectionCard Styles
+ *
+ * Styling for document section cards with confidence indicators,
+ * diffs, and critique warnings.
+ */
+
+/* ==========================================================================
+   Base Card Styles
+   ========================================================================== */
+
+.section-card {
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+  cursor: default;
+}
+
+.section-card[role='button'] {
+  cursor: pointer;
+}
+
+.section-card:hover {
+  border-color: var(--color-border-hover);
+}
+
+.section-card:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-border-focus);
+}
+
+/* ==========================================================================
+   Selected State
+   ========================================================================== */
+
+.section-card--selected {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-bg, rgba(59, 130, 246, 0.05));
+}
+
+/* ==========================================================================
+   Revising State
+   ========================================================================== */
+
+.section-card--revising {
+  border-color: var(--color-warning);
+  border-style: dashed;
+}
+
+/* ==========================================================================
+   Header
+   ========================================================================== */
+
+.section-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+}
+
+.section-card__title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   Confidence Indicator
+   ========================================================================== */
+
+.section-card__confidence {
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-family-mono);
+  white-space: nowrap;
+}
+
+.section-card__confidence--high {
+  color: var(--color-success);
+}
+
+.section-card__confidence--medium {
+  color: var(--color-warning);
+}
+
+.section-card__confidence--low {
+  color: var(--color-danger);
+}
+
+/* ==========================================================================
+   Warning Badges
+   ========================================================================== */
+
+.section-card__warnings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-sm);
+}
+
+.section-card__warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.section-card__warning--critiques {
+  background-color: var(--color-warning-bg, rgba(245, 158, 11, 0.1));
+  color: var(--color-warning);
+}
+
+.section-card__warning--revising {
+  background-color: var(--color-info-bg, rgba(59, 130, 246, 0.1));
+  color: var(--color-info);
+}
+
+/* Revising Indicator Animation */
+.section-card__revising-indicator {
+  width: 8px;
+  height: 8px;
+  background-color: currentColor;
+  border-radius: 50%;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.85);
+  }
+}
+
+/* ==========================================================================
+   Content
+   ========================================================================== */
+
+.section-card__content {
+  position: relative;
+}
+
+.section-card__text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ==========================================================================
+   Expand Button
+   ========================================================================== */
+
+.section-card__expand-btn {
+  display: inline-block;
+  margin-top: var(--spacing-xs);
+  padding: 0;
+  background: none;
+  border: none;
+  font-size: 12px;
+  color: var(--color-primary);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.section-card__expand-btn:hover {
+  color: var(--color-primary-hover);
+}
+
+.section-card__expand-btn:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ==========================================================================
+   Revision Note
+   ========================================================================== */
+
+.section-card__revision-note {
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-sm);
+  border-top: 1px dashed var(--color-border);
+  font-size: 12px;
+  font-style: italic;
+  color: var(--color-text-tertiary);
+}
+
+/* ==========================================================================
+   Dark Mode
+   ========================================================================== */
+
+[data-theme='dark'] .section-card {
+  background-color: var(--color-bg-secondary);
+}
+
+[data-theme='dark'] .section-card--selected {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+[data-theme='dark'] .section-card__warning--critiques {
+  background-color: rgba(245, 158, 11, 0.15);
+}
+
+[data-theme='dark'] .section-card__warning--revising {
+  background-color: rgba(59, 130, 246, 0.15);
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
+@media (max-width: 480px) {
+  .section-card {
+    padding: var(--spacing-sm);
+  }
+
+  .section-card__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-xs);
+  }
+
+  .section-card__title {
+    white-space: normal;
+  }
+}
+
+/* ==========================================================================
+   Reduced Motion
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .section-card {
+    transition: none;
+  }
+
+  .section-card__revising-indicator {
+    animation: none;
+    opacity: 0.7;
+  }
+}
