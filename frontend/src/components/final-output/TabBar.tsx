@@ -18,6 +18,8 @@ export interface TabBarProps {
   onTabChange: (tab: OutputTab) => void;
   /** Optional additional CSS class */
   className?: string;
+  /** Hide the Agent Insights tab (e.g., when viewing from history) */
+  hideInsights?: boolean;
 }
 
 interface TabConfig {
@@ -31,13 +33,18 @@ const TABS: TabConfig[] = [
   { id: 'redteam', label: 'Red Team Report', shortcut: '2' },
   { id: 'debate', label: 'Debate Log', shortcut: '3' },
   { id: 'metrics', label: 'Metrics', shortcut: '4' },
+  { id: 'insights', label: 'Agent Insights', shortcut: '5' },
 ];
 
 export const TabBar = memo(function TabBar({
   activeTab,
   onTabChange,
   className = '',
+  hideInsights = false,
 }: TabBarProps) {
+  // Filter tabs based on hideInsights prop
+  const visibleTabs = hideInsights ? TABS.filter((tab) => tab.id !== 'insights') : TABS;
+
   // Keyboard shortcuts (1-4) to switch tabs
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -49,17 +56,17 @@ export const TabBar = memo(function TabBar({
         return;
       }
 
-      // Check for number keys 1-4
+      // Check for number keys 1-4 (or 1-5 if insights visible)
       const keyIndex = parseInt(e.key, 10) - 1;
-      if (keyIndex >= 0 && keyIndex < TABS.length && !e.ctrlKey && !e.altKey && !e.metaKey) {
+      if (keyIndex >= 0 && keyIndex < visibleTabs.length && !e.ctrlKey && !e.altKey && !e.metaKey) {
         e.preventDefault();
-        onTabChange(TABS[keyIndex].id);
+        onTabChange(visibleTabs[keyIndex].id);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onTabChange]);
+  }, [onTabChange, visibleTabs]);
 
   const handleTabClick = useCallback(
     (tabId: OutputTab) => () => {
@@ -84,7 +91,7 @@ export const TabBar = memo(function TabBar({
       role="tablist"
       aria-label="Output view tabs"
     >
-      {TABS.map((tab) => (
+      {visibleTabs.map((tab) => (
         <button
           key={tab.id}
           className={`tab-bar__tab ${activeTab === tab.id ? 'tab-bar__tab--active' : ''}`}

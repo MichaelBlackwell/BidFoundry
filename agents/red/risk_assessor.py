@@ -1175,8 +1175,22 @@ class RiskAssessorAgent(RedTeamAgent):
         """Parse risks from LLM response."""
         risks = []
 
-        # Split by risk sections
-        risk_sections = re.split(r'###\s*Risk\s*\d+', content, flags=re.IGNORECASE)
+        # DEBUG: Log the content we're trying to parse
+        content_preview = content[:500] + "..." if len(content) > 500 else content
+        self.log_debug(f"_parse_risks: Parsing content ({len(content)} chars): {content_preview}")
+
+        # Split by risk sections - support both ### and ## headers
+        risk_sections = re.split(r'#{2,3}\s*Risk\s*\d+', content, flags=re.IGNORECASE)
+
+        # DEBUG: Log how many sections we found
+        self.log_debug(f"_parse_risks: Found {len(risk_sections) - 1} risk sections (regex split)")
+
+        # If no sections found, try alternative patterns
+        if len(risk_sections) <= 1:
+            self.log_warning(f"_parse_risks: No '### Risk N' or '## Risk N' patterns found. Trying alternative patterns...")
+            # Try "Risk 1:", "Risk 2:", etc.
+            risk_sections = re.split(r'\n\s*Risk\s+\d+\s*[:\-]', content, flags=re.IGNORECASE)
+            self.log_debug(f"_parse_risks: Alternative pattern found {len(risk_sections) - 1} sections")
 
         for section in risk_sections[1:]:  # Skip first split (before first risk)
             try:

@@ -85,7 +85,11 @@ export const RedTeamReportView = memo(function RedTeamReportView({
     };
 
     critiques.forEach((c) => {
-      counts[c.severity]++;
+      // Defensive check for undefined severity
+      const severity = c.severity || 'minor';
+      if (severity in counts) {
+        counts[severity as keyof typeof counts]++;
+      }
       const status = c.status || 'pending';
       if (status === 'pending') counts.unresolved++;
       else if (status === 'accepted') counts.accepted++;

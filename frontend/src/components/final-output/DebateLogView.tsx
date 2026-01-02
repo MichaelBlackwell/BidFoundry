@@ -37,6 +37,26 @@ const PHASE_ICONS: Record<Phase, string> = {
   'synthesis': '⚖️',
 };
 
+// Type icons for different entry types
+const TYPE_ICONS: Record<string, string> = {
+  'critique': '⚔️',
+  'response': '🛡️',
+  'draft': '📝',
+  'orchestrator': '🎯',
+  'round-marker': '🔔',
+  'synthesis': '📋',
+};
+
+// Type labels for display
+const TYPE_LABELS: Record<string, string> = {
+  'critique': 'CRITIQUE',
+  'response': 'RESPONSE',
+  'draft': 'DRAFT',
+  'orchestrator': 'ORCHESTRATOR',
+  'round-marker': 'ROUND',
+  'synthesis': 'SYNTHESIS',
+};
+
 interface RoundData {
   round: number;
   phases: {
@@ -71,8 +91,12 @@ export const DebateLogView = memo(function DebateLogView({
       const phases: RoundData['phases'] = [];
 
       // Group by phase in order
+      // Skip blue-defense phase for round 1 (no critiques to respond to yet)
       const phaseOrder: Phase[] = ['blue-build', 'red-attack', 'blue-defense', 'synthesis'];
       phaseOrder.forEach((phase) => {
+        if (phase === 'blue-defense' && round === 1) {
+          return; // Skip blue-defense in round 1
+        }
         const phaseEntries = roundEntries.filter((e) => e.phase === phase);
         if (phaseEntries.length > 0) {
           phases.push({ phase, entries: phaseEntries });
@@ -220,18 +244,21 @@ export const DebateLogView = memo(function DebateLogView({
                       {phaseData.entries.map((entry) => (
                         <div
                           key={entry.id}
-                          className={`debate-log__entry debate-log__entry--${entry.type} ${onEntryClick ? 'debate-log__entry--clickable' : ''}`}
+                          className={`debate-log__entry debate-log__entry--${entry.type} ${entry.category ? `debate-log__entry--category-${entry.category}` : ''} ${onEntryClick ? 'debate-log__entry--clickable' : ''}`}
                           onClick={onEntryClick ? handleEntryClick(entry.id) : undefined}
                           onKeyDown={onEntryClick ? handleEntryKeyDown(entry.id) : undefined}
                           tabIndex={onEntryClick ? 0 : undefined}
                           role={onEntryClick ? 'button' : undefined}
                         >
                           <div className="debate-log__entry-header">
+                            <span className="debate-log__entry-icon" aria-hidden="true">
+                              {TYPE_ICONS[entry.type] || '📄'}
+                            </span>
                             <span className="debate-log__entry-agent">
                               {entry.agentId}
                             </span>
-                            <span className="debate-log__entry-type">
-                              {entry.type}
+                            <span className={`debate-log__entry-type debate-log__entry-type--${entry.category || 'default'}`}>
+                              {TYPE_LABELS[entry.type] || entry.type.toUpperCase()}
                             </span>
                             <span className="debate-log__entry-time">
                               {formatTime(entry.timestamp)}
@@ -240,6 +267,29 @@ export const DebateLogView = memo(function DebateLogView({
                           <div className="debate-log__entry-content">
                             {entry.content}
                           </div>
+                          {/* Show metadata for orchestrator entries */}
+                          {entry.category === 'orchestrator' && entry.metadata && (
+                            <div className="debate-log__entry-metadata">
+                              {entry.metadata.consensus_reached === true && (
+                                <span className="debate-log__consensus-badge">Consensus</span>
+                              )}
+                              {typeof entry.metadata.resolution_rate === 'number' && (
+                                <span className="debate-log__resolution">
+                                  Resolution: {entry.metadata.resolution_rate}%
+                                </span>
+                              )}
+                              {typeof entry.metadata.critique_count === 'number' && (
+                                <span className="debate-log__stat">
+                                  Critiques: {entry.metadata.critique_count}
+                                </span>
+                              )}
+                              {typeof entry.metadata.response_count === 'number' && (
+                                <span className="debate-log__stat">
+                                  Responses: {entry.metadata.response_count}
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>

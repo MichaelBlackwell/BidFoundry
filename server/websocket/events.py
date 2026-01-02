@@ -40,6 +40,9 @@ class ServerEventType(str, Enum):
     DRAFT_UPDATE = "draft:update"
     CONFIDENCE_UPDATE = "confidence:update"
 
+    # Agent insights (from blue team agents)
+    AGENT_INSIGHTS_UPDATE = "agent_insights:update"
+
     # Generation lifecycle
     GENERATION_STARTED = "generation:started"
     GENERATION_COMPLETE = "generation:complete"
@@ -195,10 +198,15 @@ class AgentStreamingPayload(BaseModel):
 class CritiqueData(BaseModel):
     """Critique data from an agent."""
 
+    id: str = ""
     severity: str
     target_section: Optional[str] = Field(None, alias="targetSection")
     content: str
     suggestions: list[str] = Field(default_factory=list)
+    round: int = 1
+    phase: str = "red-attack"
+    status: str = "pending"
+    agent_id: Optional[str] = Field(None, alias="agentId")
 
     class Config:
         populate_by_name = True
@@ -250,6 +258,24 @@ class ConfidenceUpdatePayload(BaseModel):
 
     overall: float
     sections: dict[str, float] = Field(default_factory=dict)
+
+
+class AgentInsightsUpdatePayload(BaseModel):
+    """Payload for agent_insights:update event.
+
+    Contains analysis data from blue team agents:
+    - Market Analyst: TAM, SAM, competitive landscape
+    - Capture Strategist: win themes, discriminators, win probability
+    - Compliance Navigator: eligibility, compliance status, OCI risk
+    """
+
+    agent_role: str = Field(alias="agentRole")
+    agent_name: str = Field(alias="agentName")
+    content: Optional[str] = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+    class Config:
+        populate_by_name = True
 
 
 class EscalationPayload(BaseModel):

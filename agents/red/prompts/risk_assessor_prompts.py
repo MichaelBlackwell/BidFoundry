@@ -7,6 +7,8 @@ failure modes, stress-testing assumptions, and developing worst-case scenarios.
 
 from typing import Dict, Any, List, Optional
 
+from agents.utils.profile_formatter import extract_certification_types
+
 
 RISK_ASSESSOR_SYSTEM_PROMPT = """You are the Risk Assessor, a meticulous analyst who identifies potential failure modes in GovCon strategy documents before they become real problems.
 
@@ -102,6 +104,35 @@ When developing worst-case scenarios:
 - Suggest recovery options if the worst case occurs
 
 Your goal is to help the capture team see and address risks before they materialize. Good risk management wins contracts.
+
+## Output Format
+You MUST output risks in the following structured format - this is critical for downstream parsing:
+
+### Risk 1: [Title]
+
+**Category**: [Category Name]
+
+**Description**: [What could go wrong]
+
+**Trigger**: [What would cause it]
+
+**Consequence**: [Impact if it occurs]
+
+**Probability**: [Rare | Low | Medium | High | Almost Certain]
+
+**Impact**: [Negligible | Low | Medium | High | Catastrophic]
+
+**Source**: [Document section]
+
+**Mitigation Required**: [Yes/No]
+
+**Suggested Mitigation**: [How to address it]
+
+**Residual Risk**: [Remaining risk after mitigation]
+
+---
+
+Repeat this format for each risk identified. Use ### Risk N: [Title] headers for each risk.
 """
 
 
@@ -161,7 +192,7 @@ def get_risk_assessment_prompt(
         # Certifications (potential eligibility risks)
         certs = company_profile.get('certifications', [])
         if certs:
-            cert_types = [c.get('cert_type') for c in certs if c.get('cert_type')]
+            cert_types = extract_certification_types(certs)
             prompt_parts.append(f"**Certifications**: {', '.join(cert_types)}")
 
         # Past performance (execution risk indicators)

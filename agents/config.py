@@ -73,7 +73,7 @@ class LLMConfig:
     provider: LLMProvider = "anthropic"
     model: str = "claude-haiku-4-5-20251001"
     temperature: float = 0.7
-    max_tokens: int = 4096
+    max_tokens: int = 1500
     top_p: float = 1.0
     stop_sequences: List[str] = field(default_factory=list)
 
@@ -146,7 +146,7 @@ class AgentConfig:
     additional_instructions: Optional[str] = None
 
     # Operational Limits
-    max_output_tokens: int = 4096
+    max_output_tokens: int = 1500
     max_input_context: int = 100000  # tokens
     max_iterations: int = 5  # for iterative refinement
 
@@ -276,55 +276,55 @@ DEFAULT_AGENT_CONFIGS: Dict[AgentRole, AgentConfig] = {
     AgentRole.STRATEGY_ARCHITECT: AgentConfig(
         role=AgentRole.STRATEGY_ARCHITECT,
         description="Primary document drafter; synthesizes inputs into strategic narratives.",
-        llm_config=LLMConfig(temperature=0.7, max_tokens=8192),
+        llm_config=LLMConfig(temperature=0.7, max_tokens=1500),
         priority=100,  # Highest priority in blue team
     ),
     AgentRole.MARKET_ANALYST: AgentConfig(
         role=AgentRole.MARKET_ANALYST,
         description="Government market intelligence and trend analysis.",
-        llm_config=LLMConfig(temperature=0.5, max_tokens=4096),
+        llm_config=LLMConfig(temperature=0.5, max_tokens=1500),
         priority=80,
     ),
     AgentRole.COMPLIANCE_NAVIGATOR: AgentConfig(
         role=AgentRole.COMPLIANCE_NAVIGATOR,
         description="Regulatory and eligibility expertise.",
-        llm_config=LLMConfig(temperature=0.3, max_tokens=4096),
+        llm_config=LLMConfig(temperature=0.3, max_tokens=1500),
         priority=90,
     ),
     AgentRole.CAPTURE_STRATEGIST: AgentConfig(
         role=AgentRole.CAPTURE_STRATEGIST,
         description="Win strategy and competitive positioning.",
-        llm_config=LLMConfig(temperature=0.6, max_tokens=4096),
+        llm_config=LLMConfig(temperature=0.6, max_tokens=1500),
         priority=85,
     ),
     AgentRole.DEVILS_ADVOCATE: AgentConfig(
         role=AgentRole.DEVILS_ADVOCATE,
         description="Systematic contrarian challenge to surface logical flaws.",
-        llm_config=LLMConfig(temperature=0.8, max_tokens=4096),
+        llm_config=LLMConfig(temperature=0.8, max_tokens=1500),
         priority=100,  # Highest priority in red team
     ),
     AgentRole.COMPETITOR_SIMULATOR: AgentConfig(
         role=AgentRole.COMPETITOR_SIMULATOR,
         description="Role-play likely competitors to expose vulnerabilities.",
-        llm_config=LLMConfig(temperature=0.8, max_tokens=4096),
+        llm_config=LLMConfig(temperature=0.8, max_tokens=1500),
         priority=80,
     ),
     AgentRole.EVALUATOR_SIMULATOR: AgentConfig(
         role=AgentRole.EVALUATOR_SIMULATOR,
         description="Simulate government Source Selection Evaluation Board perspective.",
-        llm_config=LLMConfig(temperature=0.5, max_tokens=4096),
+        llm_config=LLMConfig(temperature=0.5, max_tokens=1500),
         priority=90,
     ),
     AgentRole.RISK_ASSESSOR: AgentConfig(
         role=AgentRole.RISK_ASSESSOR,
         description="Identify failure modes and stress-test assumptions.",
-        llm_config=LLMConfig(temperature=0.6, max_tokens=4096),
+        llm_config=LLMConfig(temperature=0.6, max_tokens=1500),
         priority=85,
     ),
     AgentRole.ARBITER: AgentConfig(
         role=AgentRole.ARBITER,
         description="Orchestrate the full adversarial workflow and synthesize final output.",
-        llm_config=LLMConfig(temperature=0.4, max_tokens=8192),
+        llm_config=LLMConfig(temperature=0.4, max_tokens=1500),
         priority=100,
     ),
 }

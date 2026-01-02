@@ -188,16 +188,28 @@ class StrategyArchitectAgent(BlueTeamAgent):
         if not template:
             # Fall back to generic sections if no template
             section_names = self._get_default_sections(context.document_type)
+            section_guidance = {}
         else:
             section_names = template.section_names
+            # Extract guidance for each section from template
+            section_guidance = {
+                spec.name: spec.guidance
+                for spec in template.sections
+                if spec.guidance
+            }
+            self.log_info(
+                f"Loaded template for '{context.document_type}' with "
+                f"{len(section_names)} sections ({len(template.required_sections)} required)"
+            )
 
-        # Build the drafting prompt
+        # Build the drafting prompt with template guidance
         prompt = get_draft_prompt(
             document_type=context.document_type,
             sections=section_names,
             company_profile=context.company_profile,
             opportunity=context.opportunity,
             additional_context=context.custom_data.get("blue_team_inputs"),
+            section_guidance=section_guidance,
         )
 
         # Generate content (placeholder for actual LLM call)

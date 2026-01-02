@@ -8,6 +8,8 @@ team's strategy from a competitive perspective.
 
 from typing import Dict, Any, List, Optional
 
+from agents.utils.profile_formatter import extract_certification_types
+
 
 COMPETITOR_SIMULATOR_SYSTEM_PROMPT = """You are the Competitor Simulator, an adversarial agent that role-plays as the client's competitors to expose strategic vulnerabilities.
 
@@ -90,6 +92,9 @@ Be aggressive but grounded:
 - Acknowledge where the client has genuine advantages
 
 Your ultimate goal is to prepare the blue team for competitive challenges before evaluators see them.
+
+## Output Length
+Keep responses concise - approximately 1 page (~500-600 words). Be direct and focus on the most critical points. Prioritize actionable insights over comprehensive coverage.
 """
 
 
@@ -211,7 +216,7 @@ def get_competitor_simulation_prompt(
         # Certifications
         certs = company_profile.get('certifications', [])
         if certs:
-            cert_types = [c.get('cert_type') for c in certs if c.get('cert_type')]
+            cert_types = extract_certification_types(certs)
             prompt_parts.append(f"**Certifications**: {', '.join(cert_types)}")
 
         # Past performance count

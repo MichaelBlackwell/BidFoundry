@@ -18,6 +18,48 @@ interface ConfidenceState {
   sections: Record<string, number>;
 }
 
+/**
+ * Structured insights from blue team agents.
+ * Organized by agent category for display in the Agent Insights panel.
+ */
+export interface AgentInsights {
+  marketIntelligence: {
+    tam?: string | number;
+    sam?: string | number;
+    competitiveDensity?: string;
+    opportunityCount?: number;
+    rankedOpportunities?: unknown[];
+    timingRecommendations?: string[];
+    marketTrends?: string[];
+    analysisContent?: string;
+  };
+  captureStrategy: {
+    winThemeCount?: number;
+    discriminatorCount?: number;
+    competitorCount?: number;
+    winProbability?: string;
+    pricePositioning?: string;
+    analysisContent?: string;
+  };
+  complianceStatus: {
+    eligibleSetasides?: string[];
+    overallStatus?: string;
+    criticalIssuesCount?: number;
+    complianceGapsCount?: number;
+    ociRiskLevel?: string;
+    analysisContent?: string;
+  };
+  summary: {
+    agentsContributed: Array<{
+      role: string;
+      name: string;
+      hasContent: boolean;
+      hasSections: boolean;
+    }>;
+    keyFindings: string[];
+  };
+}
+
 interface SwarmState {
   // Generation lifecycle
   status: GenerationStatus;
@@ -32,6 +74,9 @@ interface SwarmState {
 
   // Confidence tracking
   confidence: ConfidenceState | null;
+
+  // Agent insights from blue team agents
+  agentInsights: AgentInsights;
 
   // Accumulated outputs
   drafts: DocumentDraft[];
@@ -51,6 +96,7 @@ interface SwarmState {
   setPhase: (phase: Phase) => void;
   updateAgent: (agentId: string, updates: Partial<AgentRuntimeState>) => void;
   setConfidence: (confidence: ConfidenceState) => void;
+  updateAgentInsights: (payload: { agentRole: string; agentName: string; content: string | null; metadata: Record<string, unknown> }) => void;
   addDraft: (draft: DocumentDraft) => void;
   updateDraft: (draft: DocumentDraft) => void;
   addCritique: (critique: Critique) => void;
@@ -64,6 +110,16 @@ interface SwarmState {
   reset: () => void;
 }
 
+const initialAgentInsights: AgentInsights = {
+  marketIntelligence: {},
+  captureStrategy: {},
+  complianceStatus: {},
+  summary: {
+    agentsContributed: [],
+    keyFindings: [],
+  },
+};
+
 const initialState = {
   status: 'idle' as GenerationStatus,
   config: null,
@@ -73,6 +129,7 @@ const initialState = {
   currentPhase: 'blue-build' as Phase,
   agents: {},
   confidence: null,
+  agentInsights: initialAgentInsights,
   drafts: [],
   critiques: [],
   responses: [],
@@ -127,6 +184,86 @@ export const useSwarmStore = create<SwarmState>()(
 
       setConfidence: (confidence) => set({ confidence }),
 
+      updateAgentInsights: (payload) =>
+        set((state) => {
+          const { agentRole, agentName, content, metadata } = payload;
+          const roleLower = agentRole.toLowerCase();
+
+          // Create updated insights based on agent role
+          const updatedInsights = { ...state.agentInsights };
+
+          // Track agent contribution in summary
+          const alreadyContributed = updatedInsights.summary.agentsContributed.some(
+            (a) => a.role === agentRole
+          );
+          if (!alreadyContributed) {
+            updatedInsights.summary = {
+              ...updatedInsights.summary,
+              agentsContributed: [
+                ...updatedInsights.summary.agentsContributed,
+                {
+                  role: agentRole,
+                  name: agentName,
+                  hasContent: !!content,
+                  hasSections: false,
+                },
+              ],
+            };
+          }
+
+          // Route to appropriate insight category based on role
+          if (roleLower.includes('market_analyst') || roleLower.includes('market analyst')) {
+            updatedInsights.marketIntelligence = {
+              tam: metadata.tam as string | number | undefined,
+              sam: metadata.sam as string | number | undefined,
+              competitiveDensity: metadata.competitive_density as string | undefined,
+              opportunityCount: metadata.opportunity_count as number | undefined,
+              rankedOpportunities: metadata.ranked_opportunities as unknown[] | undefined,
+              timingRecommendations: metadata.timing_recommendations as string[] | undefined,
+              marketTrends: metadata.market_trends as string[] | undefined,
+              analysisContent: content || undefined,
+            };
+            if (metadata.competitive_density) {
+              updatedInsights.summary.keyFindings = [
+                ...updatedInsights.summary.keyFindings,
+                `Market competitive density: ${metadata.competitive_density}`,
+              ];
+            }
+          } else if (roleLower.includes('capture_strategist') || roleLower.includes('capture strategist')) {
+            updatedInsights.captureStrategy = {
+              winThemeCount: metadata.win_theme_count as number | undefined,
+              discriminatorCount: metadata.discriminator_count as number | undefined,
+              competitorCount: metadata.competitor_count as number | undefined,
+              winProbability: metadata.win_probability as string | undefined,
+              pricePositioning: metadata.price_positioning as string | undefined,
+              analysisContent: content || undefined,
+            };
+            if (metadata.win_probability) {
+              updatedInsights.summary.keyFindings = [
+                ...updatedInsights.summary.keyFindings,
+                `Win probability: ${metadata.win_probability}`,
+              ];
+            }
+          } else if (roleLower.includes('compliance_navigator') || roleLower.includes('compliance navigator')) {
+            updatedInsights.complianceStatus = {
+              eligibleSetasides: metadata.eligible_setasides as string[] | undefined,
+              overallStatus: metadata.overall_status as string | undefined,
+              criticalIssuesCount: metadata.critical_issues_count as number | undefined,
+              complianceGapsCount: metadata.compliance_gaps_count as number | undefined,
+              ociRiskLevel: metadata.oci_risk_level as string | undefined,
+              analysisContent: content || undefined,
+            };
+            if (metadata.overall_status) {
+              updatedInsights.summary.keyFindings = [
+                ...updatedInsights.summary.keyFindings,
+                `Compliance status: ${metadata.overall_status}`,
+              ];
+            }
+          }
+
+          return { agentInsights: updatedInsights };
+        }),
+
       addDraft: (draft) =>
         set((state) => ({
           drafts: [...state.drafts, draft],
@@ -139,7 +276,14 @@ export const useSwarmStore = create<SwarmState>()(
 
       addCritique: (critique) =>
         set((state) => ({
-          critiques: [...state.critiques, critique],
+          critiques: [
+            ...state.critiques,
+            {
+              ...critique,
+              severity: critique.severity || 'minor',
+              status: critique.status || 'pending',
+            },
+          ],
         })),
 
       addResponse: (response) =>
@@ -194,6 +338,7 @@ export const selectCurrentPhase = (state: SwarmState) => state.currentPhase;
 export const selectAgents = (state: SwarmState) => Object.values(state.agents);
 export const selectLatestDraft = (state: SwarmState) =>
   state.drafts[state.drafts.length - 1] ?? null;
+export const selectAgentInsights = (state: SwarmState) => state.agentInsights;
 
 // Critique and Response selectors
 export const selectCritiquesForRound = (round: number) => (state: SwarmState) =>

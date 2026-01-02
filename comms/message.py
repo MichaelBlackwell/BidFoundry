@@ -393,7 +393,7 @@ def create_status_message(
             content_type="json",
             structured_data={
                 "type": status_type,
-                "agent_id": sender_role.lower().replace(" ", "_"),
+                "agent_id": sender_role.lower().replace(" ", "_").replace("'", ""),
                 "agent_role": sender_role,
                 **(data or {}),
             },

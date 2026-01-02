@@ -138,6 +138,17 @@ export interface ConnectedPayload {
   serverTime: number;
 }
 
+/**
+ * Payload for agent_insights:update event.
+ * Contains analysis data from blue team agents (Market Analyst, Capture Strategist, Compliance Navigator).
+ */
+export interface AgentInsightsUpdatePayload {
+  agentRole: string;
+  agentName: string;
+  content: string | null;
+  metadata: Record<string, unknown>;
+}
+
 export type ServerEventType =
   | 'connected'
   | 'round:start'
@@ -149,6 +160,7 @@ export type ServerEventType =
   | 'agent:complete'
   | 'draft:update'
   | 'confidence:update'
+  | 'agent_insights:update'
   | 'escalation:triggered'
   | 'generation:complete'
   | 'generation:error';
@@ -164,6 +176,7 @@ export interface ServerEvents {
   'agent:complete': AgentCompletePayload;
   'draft:update': DraftUpdatePayload;
   'confidence:update': ConfidenceUpdatePayload;
+  'agent_insights:update': AgentInsightsUpdatePayload;
   'escalation:triggered': EscalationTriggeredPayload;
   'generation:complete': GenerationCompletePayload;
   'generation:error': GenerationErrorPayload;

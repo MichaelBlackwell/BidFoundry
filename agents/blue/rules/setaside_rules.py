@@ -7,8 +7,10 @@ company qualifications against specific set-aside requirements.
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List, Optional, Dict, Any, Set
+from typing import List, Optional, Dict, Any, Set, Union
 from datetime import date
+
+from agents.utils.profile_formatter import extract_certification_type
 
 
 class SetAsideType(str, Enum):
@@ -427,7 +429,7 @@ class SetAsideValidator:
 
         requirements = self._requirements.get(set_aside, [])
         certifications = company_profile.get("certifications", [])
-        cert_types = {c.get("cert_type") for c in certifications}
+        cert_types = {extract_certification_type(c) for c in certifications}
 
         # Check each requirement
         for req in requirements:
@@ -459,7 +461,8 @@ class SetAsideValidator:
             matching_cert = self._find_certification(certifications, required_cert)
             if matching_cert:
                 result.certification_status = "Active"
-                exp_date = matching_cert.get("expiration_date")
+                # Only check expiration if cert is a dict (string certs don't have expiration info)
+                exp_date = matching_cert.get("expiration_date") if isinstance(matching_cert, dict) else None
                 if exp_date:
                     result.certification_expiration = date.fromisoformat(exp_date) if isinstance(exp_date, str) else exp_date
                     # Check if expiring soon
@@ -535,15 +538,16 @@ class SetAsideValidator:
 
     def _find_certification(
         self,
-        certifications: List[Dict[str, Any]],
+        certifications: List[Union[str, Dict[str, Any]]],
         cert_type: str,
-    ) -> Optional[Dict[str, Any]]:
-        """Find a certification by type."""
+    ) -> Optional[Union[str, Dict[str, Any]]]:
+        """Find a certification by type. Handles both string and dict formats."""
         for cert in certifications:
-            if cert.get("cert_type") == cert_type:
+            cert_type_value = extract_certification_type(cert)
+            if cert_type_value == cert_type:
                 return cert
             # Handle SDVOSB satisfying VOSB requirement
-            if cert_type == "VOSB" and cert.get("cert_type") == "SDVOSB":
+            if cert_type == "VOSB" and cert_type_value == "SDVOSB":
                 return cert
         return None
 

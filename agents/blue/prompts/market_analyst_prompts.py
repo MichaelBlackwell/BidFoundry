@@ -13,6 +13,7 @@ from agents.utils.profile_formatter import (
     format_teaming_relationships,
     format_geographic_coverage,
     format_socioeconomic_status,
+    extract_certification_types,
 )
 
 
@@ -52,6 +53,9 @@ Your analyses should:
 - Identify patterns in procurement behavior
 - Flag timing sensitivities (fiscal year end, recompetes)
 - Assess realistic probability of success
+
+## Output Length
+Keep responses concise - approximately 1 page (~500-600 words). Be direct and focus on the most critical points. Prioritize actionable insights over comprehensive coverage.
 """
 
 
@@ -322,7 +326,7 @@ def get_opportunity_ranking_prompt(
 
         certs = company_profile.get('certifications', [])
         if certs:
-            cert_types = [c.get('cert_type') for c in certs]
+            cert_types = extract_certification_types(certs)
             prompt_parts.append(f"**Certifications**: {', '.join(cert_types)}")
 
         caps = company_profile.get('core_capabilities', [])

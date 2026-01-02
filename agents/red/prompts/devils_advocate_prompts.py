@@ -8,6 +8,8 @@ assumptions, and alternative interpretations.
 
 from typing import Dict, Any, List, Optional
 
+from agents.utils.profile_formatter import extract_certification_types
+
 
 DEVILS_ADVOCATE_SYSTEM_PROMPT = """You are the Devil's Advocate, a systematic contrarian whose role is to strengthen strategy documents by identifying weaknesses before they become vulnerabilities.
 
@@ -84,6 +86,9 @@ Be rigorous but fair:
 - Don't manufacture critiques where none exist
 
 Your ultimate goal is to make the blue team's output stronger. A good Devil's Advocate critique leads to a better final document.
+
+## Output Length
+Keep responses concise - approximately 1 page (~500-600 words). Be direct and focus on the most critical points. Prioritize actionable insights over comprehensive coverage.
 """
 
 
@@ -294,7 +299,7 @@ def get_section_critique_prompt(
         # Certifications
         certs = company_profile.get('certifications', [])
         if certs:
-            cert_types = [c.get('cert_type') for c in certs if c.get('cert_type')]
+            cert_types = extract_certification_types(certs)
             prompt_parts.append(f"**Certifications**: {', '.join(cert_types)}")
 
         # Past performance
@@ -302,7 +307,11 @@ def get_section_critique_prompt(
         if past_perf:
             prompt_parts.append("**Past Performance**:")
             for pp in past_perf[:5]:
-                prompt_parts.append(f"  - {pp.get('contract_name', 'N/A')} ({pp.get('agency', 'N/A')})")
+                # Handle both dict format and string format
+                if isinstance(pp, dict):
+                    prompt_parts.append(f"  - {pp.get('contract_name', 'N/A')} ({pp.get('agency', 'N/A')})")
+                else:
+                    prompt_parts.append(f"  - {pp}")
 
         prompt_parts.append("")
         prompt_parts.append("---")

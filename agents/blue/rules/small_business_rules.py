@@ -10,6 +10,8 @@ from enum import Enum
 from typing import List, Optional, Dict, Any
 from datetime import date
 
+from agents.utils.profile_formatter import extract_certification_type
+
 
 class SmallBusinessProgram(str, Enum):
     """SBA small business programs and certifications."""
@@ -242,7 +244,7 @@ class SmallBusinessValidator:
 
         # Get certifications from profile
         certifications = company_profile.get("certifications", [])
-        cert_types = {c.get("cert_type") for c in certifications}
+        cert_types = {extract_certification_type(c) for c in certifications}
 
         # Check for existing certification
         program_cert_mapping = {

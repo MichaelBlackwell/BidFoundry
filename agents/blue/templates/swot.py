@@ -43,12 +43,17 @@ class SWOTAnalysisTemplate(DocumentTemplate):
                 description="High-level summary of the SWOT analysis",
                 min_words=75,
                 max_words=250,
+                required=True,
                 guidance=(
                     "Provide a brief overview:\n"
-                    "- Context for the analysis (company-wide or opportunity-specific)\n"
-                    "- Key findings from each quadrant\n"
-                    "- Overall strategic assessment\n"
-                    "- Primary recommendation"
+                    "- Context: Company-wide analysis OR opportunity-specific (name the opportunity)\n"
+                    "- Top 2 Strengths that drive competitive advantage\n"
+                    "- Top 2 Weaknesses that require attention\n"
+                    "- Top 2 Opportunities to pursue\n"
+                    "- Top 2 Threats to monitor/mitigate\n"
+                    "- Overall Strategic Assessment: Favorable/Neutral/Challenging\n"
+                    "- Primary Recommendation (one clear action)\n"
+                    "This summary must be usable as a standalone briefing."
                 ),
             ),
             SectionSpec(
@@ -57,19 +62,24 @@ class SWOTAnalysisTemplate(DocumentTemplate):
                 description="Internal positive attributes and resources",
                 min_words=150,
                 max_words=400,
+                required=True,
                 guidance=(
-                    "Identify internal strengths:\n"
-                    "- Technical capabilities and expertise\n"
-                    "- Relevant past performance\n"
-                    "- Certifications and clearances\n"
-                    "- Key personnel qualifications\n"
-                    "- Customer relationships\n"
-                    "- Contract vehicles and access\n\n"
-                    "For each strength:\n"
-                    "- Describe the strength specifically\n"
-                    "- Explain why it's relevant\n"
-                    "- Provide evidence/proof points\n"
-                    "Prioritize by impact."
+                    "Identify 5-8 internal strengths. For EACH strength include:\n\n"
+                    "**Categories to Consider:**\n"
+                    "- Technical capabilities and specialized expertise\n"
+                    "- Relevant past performance (specific contracts)\n"
+                    "- Certifications (ISO, CMMI, CMMC, etc.)\n"
+                    "- Security clearances (facility and personnel)\n"
+                    "- Key personnel qualifications and experience\n"
+                    "- Customer relationships and incumbency\n"
+                    "- Contract vehicles (GSA, OASIS, etc.)\n"
+                    "- Financial stability and bonding capacity\n\n"
+                    "**For Each Strength:**\n"
+                    "- Specific description (not generic)\n"
+                    "- Relevance to target market/opportunity\n"
+                    "- Evidence/proof points (quantified where possible)\n"
+                    "- Impact rating: High/Medium/Low\n\n"
+                    "Prioritize by strategic impact."
                 ),
             ),
             SectionSpec(
@@ -78,19 +88,24 @@ class SWOTAnalysisTemplate(DocumentTemplate):
                 description="Internal negative attributes and gaps",
                 min_words=150,
                 max_words=400,
+                required=True,
                 guidance=(
-                    "Honestly assess internal weaknesses:\n"
-                    "- Capability gaps vs. requirements\n"
-                    "- Limited or no past performance in key areas\n"
+                    "Honestly assess 5-8 internal weaknesses. For EACH weakness:\n\n"
+                    "**Categories to Consider:**\n"
+                    "- Capability gaps vs. target requirements\n"
+                    "- Limited/no past performance in key areas\n"
                     "- Missing certifications or clearances\n"
-                    "- Resource constraints\n"
+                    "- Resource/capacity constraints\n"
                     "- Geographic limitations\n"
-                    "- Teaming gaps\n\n"
-                    "For each weakness:\n"
-                    "- Describe the gap honestly\n"
-                    "- Assess impact (High/Medium/Low)\n"
-                    "- Propose mitigation strategy\n"
-                    "Don't sugar-coat - honest assessment is essential."
+                    "- Teaming gaps or dependencies\n"
+                    "- Pricing competitiveness issues\n"
+                    "- Brand recognition gaps\n\n"
+                    "**For Each Weakness:**\n"
+                    "- Honest, specific description\n"
+                    "- Impact Assessment: High/Medium/Low\n"
+                    "- Mitigation Strategy: What can be done to address it?\n"
+                    "- Timeline: How long to remediate?\n\n"
+                    "DO NOT sugar-coat. Honest assessment is essential for strategy."
                 ),
             ),
             SectionSpec(
@@ -99,18 +114,24 @@ class SWOTAnalysisTemplate(DocumentTemplate):
                 description="External factors that could benefit the company",
                 min_words=150,
                 max_words=400,
+                required=True,
                 guidance=(
-                    "Identify external opportunities:\n"
-                    "- Agency priorities aligned with capabilities\n"
+                    "Identify 5-8 external opportunities. For EACH opportunity:\n\n"
+                    "**Categories to Consider:**\n"
+                    "- Agency priorities aligned with our capabilities\n"
                     "- Budget trends favoring our services\n"
-                    "- Upcoming recompetes with weak incumbents\n"
+                    "- Upcoming recompetes with weak/vulnerable incumbents\n"
                     "- New requirements matching our expertise\n"
                     "- Teaming/partnership opportunities\n"
-                    "- Set-aside advantages\n\n"
-                    "For each opportunity:\n"
-                    "- Describe the opportunity\n"
-                    "- Explain why we can capitalize\n"
-                    "- Suggest action to pursue"
+                    "- Set-aside advantages (8(a), HUBZone, SDVOSB, etc.)\n"
+                    "- Technology trends we can leverage\n"
+                    "- Regulatory changes creating demand\n\n"
+                    "**For Each Opportunity:**\n"
+                    "- Specific description with source/evidence\n"
+                    "- Why we can capitalize (alignment to strengths)\n"
+                    "- Probability: High/Medium/Low\n"
+                    "- Suggested Action to pursue\n"
+                    "- Timeline/urgency"
                 ),
             ),
             SectionSpec(
@@ -119,18 +140,24 @@ class SWOTAnalysisTemplate(DocumentTemplate):
                 description="External factors that could harm the company",
                 min_words=150,
                 max_words=400,
+                required=True,
                 guidance=(
-                    "Assess external threats:\n"
+                    "Assess 5-8 external threats. For EACH threat:\n\n"
+                    "**Categories to Consider:**\n"
                     "- Strong incumbent positions\n"
-                    "- Well-funded competitor activity\n"
+                    "- Well-funded/aggressive competitor activity\n"
                     "- Budget cuts or program cancellations\n"
                     "- Changing agency priorities\n"
-                    "- Regulatory changes\n"
-                    "- Technological disruption\n\n"
-                    "For each threat:\n"
-                    "- Describe the threat\n"
-                    "- Assess likelihood and impact\n"
-                    "- Propose risk mitigation"
+                    "- Regulatory/compliance changes (CMMC, etc.)\n"
+                    "- Technological disruption\n"
+                    "- Economic factors affecting pricing\n"
+                    "- Talent market challenges\n\n"
+                    "**For Each Threat:**\n"
+                    "- Specific description\n"
+                    "- Likelihood: High/Medium/Low\n"
+                    "- Impact: High/Medium/Low\n"
+                    "- Risk Mitigation strategy\n"
+                    "- Early warning indicators to monitor"
                 ),
             ),
             SectionSpec(
@@ -139,14 +166,23 @@ class SWOTAnalysisTemplate(DocumentTemplate):
                 description="Analysis of how SWOT factors interact",
                 min_words=100,
                 max_words=300,
+                required=True,
                 dependencies=["Strengths", "Weaknesses", "Opportunities", "Threats"],
                 guidance=(
-                    "Connect the SWOT factors:\n"
-                    "- How can strengths exploit opportunities?\n"
-                    "- How can strengths counter threats?\n"
-                    "- How do weaknesses limit opportunities?\n"
-                    "- Where do weaknesses amplify threats?\n\n"
-                    "Identify the critical intersections."
+                    "Analyze SWOT factor interactions using the TOWS matrix:\n\n"
+                    "**S-O Intersection (Leverage):**\n"
+                    "- Which strengths can exploit which opportunities?\n"
+                    "- Quick wins available?\n\n"
+                    "**S-T Intersection (Defend):**\n"
+                    "- Which strengths can counter which threats?\n"
+                    "- Defensive positioning needed?\n\n"
+                    "**W-O Intersection (Improve):**\n"
+                    "- Which weaknesses limit which opportunities?\n"
+                    "- Investment priorities to close gaps?\n\n"
+                    "**W-T Intersection (Avoid):**\n"
+                    "- Where do weaknesses amplify threats?\n"
+                    "- Critical vulnerabilities requiring immediate action?\n\n"
+                    "Identify the 2-3 most critical intersections."
                 ),
             ),
             SectionSpec(
@@ -155,14 +191,23 @@ class SWOTAnalysisTemplate(DocumentTemplate):
                 description="Priority actions based on SWOT analysis",
                 min_words=100,
                 max_words=300,
+                required=True,
                 dependencies=["Strategic Implications"],
                 guidance=(
-                    "Provide prioritized action items:\n"
-                    "- SO Strategies: Use strengths to pursue opportunities\n"
-                    "- WO Strategies: Address weaknesses to enable opportunities\n"
-                    "- ST Strategies: Use strengths to mitigate threats\n"
-                    "- WT Strategies: Minimize weaknesses and avoid threats\n\n"
-                    "Each action should be specific and assignable."
+                    "Provide prioritized action items by TOWS strategy:\n\n"
+                    "**SO Strategies (Pursue):** 2-3 actions\n"
+                    "- Use strengths to pursue opportunities\n"
+                    "- Owner, timeline, success metric\n\n"
+                    "**WO Strategies (Invest):** 2-3 actions\n"
+                    "- Address weaknesses to enable opportunities\n"
+                    "- Owner, timeline, investment required\n\n"
+                    "**ST Strategies (Defend):** 2-3 actions\n"
+                    "- Use strengths to mitigate threats\n"
+                    "- Owner, timeline, success metric\n\n"
+                    "**WT Strategies (Avoid):** 1-2 actions\n"
+                    "- Minimize weaknesses and avoid threats\n"
+                    "- Owner, timeline, risk indicator\n\n"
+                    "Each action must be SPECIFIC, ASSIGNABLE, and TIME-BOUND."
                 ),
             ),
         ]

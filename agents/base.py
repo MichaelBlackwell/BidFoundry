@@ -520,6 +520,13 @@ class AbstractAgent(ABC):
             f"Anthropic call successful: {input_tokens} input, {output_tokens} output tokens"
         )
 
+        # DEBUG: Warn if response is empty
+        if not content or len(content.strip()) == 0:
+            self.log_warning(
+                f"Anthropic returned empty content! Model: {llm_config.model}, "
+                f"stop_reason: {response.stop_reason if hasattr(response, 'stop_reason') else 'unknown'}"
+            )
+
         return {
             "success": True,
             "content": content,
@@ -562,6 +569,14 @@ class AbstractAgent(ABC):
         self.log_debug(
             f"Groq call successful: {input_tokens} input, {output_tokens} output tokens"
         )
+
+        # DEBUG: Warn if response is empty
+        if not content or len(content.strip()) == 0:
+            finish_reason = response.choices[0].finish_reason if response.choices else "unknown"
+            self.log_warning(
+                f"Groq returned empty content! Model: {llm_config.model}, "
+                f"finish_reason: {finish_reason}"
+            )
 
         return {
             "success": True,

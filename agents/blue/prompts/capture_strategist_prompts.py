@@ -14,6 +14,7 @@ from agents.utils.profile_formatter import (
     format_socioeconomic_status,
     format_teaming_relationships,
     format_geographic_coverage,
+    extract_certification_types,
 )
 
 
@@ -52,6 +53,9 @@ Your strategies should:
 - Address customer hot buttons and pain points
 - Counter anticipated competitor strategies
 - Align with evaluation criteria weighting
+
+## Output Length
+Keep responses concise - approximately 1 page (~500-600 words). Be direct and focus on the most critical points. Prioritize actionable insights over comprehensive coverage.
 """
 
 
@@ -117,23 +121,28 @@ def get_win_theme_development_prompt(
         if past_perf:
             prompt_parts.append("**Relevant Past Performance**:")
             for pp in past_perf[:5]:  # Limit to top 5
-                prompt_parts.append(f"  - **{pp.get('contract_name', 'N/A')}**")
-                value = pp.get('contract_value', pp.get('value', 0))
-                prompt_parts.append(f"    Agency: {pp.get('agency', 'N/A')} | Value: ${value:,.0f}")
-                if pp.get('overall_rating'):
-                    prompt_parts.append(f"    Rating: {pp.get('overall_rating')}")
-                if pp.get('relevance'):
-                    prompt_parts.append(f"    Relevance: {pp.get('relevance')}")
-                achievements = pp.get('key_accomplishments', pp.get('achievements', []))
-                if achievements:
-                    for ach in achievements[:3]:
-                        prompt_parts.append(f"    - {ach}")
+                # Handle both dict format and string format
+                if isinstance(pp, dict):
+                    prompt_parts.append(f"  - **{pp.get('contract_name', 'N/A')}**")
+                    value = pp.get('contract_value', pp.get('value', 0))
+                    prompt_parts.append(f"    Agency: {pp.get('agency', 'N/A')} | Value: ${value:,.0f}")
+                    if pp.get('overall_rating'):
+                        prompt_parts.append(f"    Rating: {pp.get('overall_rating')}")
+                    if pp.get('relevance'):
+                        prompt_parts.append(f"    Relevance: {pp.get('relevance')}")
+                    achievements = pp.get('key_accomplishments', pp.get('achievements', []))
+                    if achievements:
+                        for ach in achievements[:3]:
+                            prompt_parts.append(f"    - {ach}")
+                else:
+                    # Simple string format
+                    prompt_parts.append(f"  - {pp}")
             prompt_parts.append("")
 
         # Certifications
         certs = company_profile.get('certifications', [])
         if certs:
-            cert_list = [c.get('cert_type') for c in certs if c.get('cert_type')]
+            cert_list = extract_certification_types(certs)
             prompt_parts.append(f"**Certifications**: {', '.join(cert_list)}")
             prompt_parts.append("")
 
@@ -367,10 +376,15 @@ def get_discriminator_identification_prompt(
         if past_perf:
             prompt_parts.append("**Past Performance Highlights**:")
             for pp in past_perf[:5]:
-                prompt_parts.append(f"  - {pp.get('contract_name', 'N/A')} ({pp.get('agency', 'N/A')})")
-                if pp.get('unique_aspects'):
-                    for ua in pp.get('unique_aspects', []):
-                        prompt_parts.append(f"    - {ua}")
+                # Handle both dict format and string format
+                if isinstance(pp, dict):
+                    prompt_parts.append(f"  - {pp.get('contract_name', 'N/A')} ({pp.get('agency', 'N/A')})")
+                    if pp.get('unique_aspects'):
+                        for ua in pp.get('unique_aspects', []):
+                            prompt_parts.append(f"    - {ua}")
+                else:
+                    # Simple string format
+                    prompt_parts.append(f"  - {pp}")
             prompt_parts.append("")
 
         # Key personnel unique qualifications
@@ -387,8 +401,12 @@ def get_discriminator_identification_prompt(
         if certs:
             prompt_parts.append("**Certifications**:")
             for c in certs:
-                level = f" (Level {c.get('level')})" if c.get('level') else ""
-                prompt_parts.append(f"  - {c.get('cert_type', 'N/A')}{level}")
+                # Handle both dict format and string format
+                if isinstance(c, dict):
+                    level = f" (Level {c.get('level')})" if c.get('level') else ""
+                    prompt_parts.append(f"  - {c.get('cert_type', 'N/A')}{level}")
+                else:
+                    prompt_parts.append(f"  - {c}")
             prompt_parts.append("")
 
     # Add opportunity context
@@ -584,7 +602,7 @@ def get_ghost_team_analysis_prompt(
 
         certs = company_profile.get('certifications', [])
         if certs:
-            cert_types = [c.get('cert_type') for c in certs if c.get('cert_type')]
+            cert_types = extract_certification_types(certs)
             prompt_parts.append(f"**Certifications**: {', '.join(cert_types)}")
 
         prompt_parts.append("")

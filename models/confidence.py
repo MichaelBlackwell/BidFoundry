@@ -114,7 +114,7 @@ class SectionConfidence:
 
     # Core score
     base_score: float = 0.80  # Starting score before adjustments
-    adjusted_score: float = 0.80  # Final score after adjustments
+    adjusted_score: float = field(init=False)  # Final score after adjustments (initialized in __post_init__)
     level: ConfidenceLevel = ConfidenceLevel.HIGH
 
     # Contributing factors
@@ -132,6 +132,10 @@ class SectionConfidence:
     # Metadata
     word_count: int = 0
     revision_count: int = 0
+
+    def __post_init__(self):
+        """Initialize adjusted_score from base_score after dataclass init."""
+        self.adjusted_score = self.base_score
 
     def apply_adjustment(self, reason: str, delta: float) -> None:
         """Apply an adjustment to the confidence score."""
@@ -170,7 +174,7 @@ class SectionConfidence:
             section_id=data.get("section_id", ""),
             section_name=data.get("section_name", ""),
             base_score=data.get("base_score", 0.80),
-            adjusted_score=data.get("adjusted_score", 0.80),
+            # adjusted_score is set in __post_init__ from base_score, then overwritten below
             level=ConfidenceLevel(data.get("level", "High")),
             critique_count=data.get("critique_count", 0),
             unresolved_critiques=data.get("unresolved_critiques", 0),
@@ -181,6 +185,9 @@ class SectionConfidence:
             word_count=data.get("word_count", 0),
             revision_count=data.get("revision_count", 0),
         )
+        # Override adjusted_score if it was saved in the dict
+        if "adjusted_score" in data:
+            section.adjusted_score = data["adjusted_score"]
         return section
 
     def to_json(self) -> str:
@@ -300,13 +307,18 @@ class ConfidenceScore:
 
     def _evaluate_review_requirement(self) -> None:
         """Determine if human review is required based on scores and flags."""
-        self.requires_human_review = False
-        self.review_reasons = []
+        # Preserve any pre-existing review requirements (e.g., missing sections)
+        # Don't reset to False/[] if already set
+        existing_reasons = list(self.review_reasons) if self.review_reasons else []
+        existing_review_required = self.requires_human_review
+
+        # Start fresh for new reasons (we'll merge existing at the end)
+        new_reasons = []
 
         # Check overall threshold
         if self.overall_score < self.thresholds.human_review_threshold:
             self.requires_human_review = True
-            self.review_reasons.append(
+            new_reasons.append(
                 f"Overall confidence ({self.overall_score:.2f}) below threshold "
                 f"({self.thresholds.human_review_threshold})"
             )
@@ -314,7 +326,7 @@ class ConfidenceScore:
         # Check for unresolved critical critiques
         if self.unresolved_critical > 0:
             self.requires_human_review = True
-            self.review_reasons.append(
+            new_reasons.append(
                 f"{self.unresolved_critical} unresolved critical critique(s)"
             )
 
@@ -323,7 +335,7 @@ class ConfidenceScore:
         if weak_sections:
             self.requires_human_review = True
             section_names = ", ".join(s.section_name for s in weak_sections)
-            self.review_reasons.append(
+            new_reasons.append(
                 f"Section(s) below threshold: {section_names}"
             )
 
@@ -336,7 +348,17 @@ class ConfidenceScore:
         for flag in self.risk_flags:
             if flag in critical_flags:
                 self.requires_human_review = True
-                self.review_reasons.append(f"Risk flag: {flag.value}")
+                new_reasons.append(f"Risk flag: {flag.value}")
+
+        # Merge existing reasons with new ones (existing first, avoid duplicates)
+        self.review_reasons = existing_reasons.copy()
+        for reason in new_reasons:
+            if reason not in self.review_reasons:
+                self.review_reasons.append(reason)
+
+        # Preserve existing review requirement if it was already set
+        if existing_review_required:
+            self.requires_human_review = True
 
     def to_dict(self) -> dict:
         return {

@@ -2,6 +2,7 @@
 
 import hashlib
 import os
+import re
 import secrets
 from datetime import datetime, timedelta
 from io import BytesIO
@@ -17,6 +18,8 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.platypus import (
+    ListFlowable,
+    ListItem,
     Paragraph,
     SimpleDocTemplate,
     Spacer,
@@ -52,6 +55,127 @@ def _get_red_team_summary_text(red_team_report: dict) -> str:
             f"Resolution rate: {resolution_rate:.1f}%. Consensus: {consensus}."
         )
     return raw_summary if raw_summary else ""
+
+
+def _markdown_to_reportlab(text: str) -> str:
+    """Convert markdown formatting to ReportLab XML tags.
+
+    Handles: **bold**, *italic*, inline code, and escapes special characters.
+    Headers and lists are handled separately in _parse_markdown_content.
+    """
+    # First escape XML special characters (but preserve our markers)
+    text = text.replace("&", "&amp;")
+    text = text.replace("<", "&lt;")
+    text = text.replace(">", "&gt;")
+
+    # Convert **bold** to <b>bold</b>
+    text = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', text)
+
+    # Convert *italic* to <i>italic</i> (but not inside bold)
+    text = re.sub(r'(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)', r'<i>\1</i>', text)
+
+    # Convert `code` to <font name="Courier">code</font>
+    text = re.sub(r'`([^`]+)`', r'<font name="Courier">\1</font>', text)
+
+    return text
+
+
+def _parse_markdown_content(content: str, body_style, heading_style, list_style) -> list:
+    """Parse markdown content and return a list of ReportLab flowables.
+
+    Handles:
+    - Headers (### Header)
+    - Bullet lists (- item)
+    - Numbered lists (1. item)
+    - Regular paragraphs with bold/italic
+    """
+    flowables = []
+    lines = content.split("\n")
+    current_list_items = []
+    current_list_type = None  # 'bullet' or 'numbered'
+    current_paragraph_lines = []
+
+    def flush_paragraph():
+        """Add accumulated paragraph lines as a single paragraph."""
+        nonlocal current_paragraph_lines
+        if current_paragraph_lines:
+            para_text = " ".join(current_paragraph_lines)
+            para_text = _markdown_to_reportlab(para_text)
+            if para_text.strip():
+                flowables.append(Paragraph(para_text, body_style))
+            current_paragraph_lines = []
+
+    def flush_list():
+        """Add accumulated list items as a ListFlowable."""
+        nonlocal current_list_items, current_list_type
+        if current_list_items:
+            is_numbered = current_list_type == 'numbered'
+            list_kwargs = {
+                'bulletType': '1' if is_numbered else 'bullet',
+                'leftIndent': 20,
+            }
+            # Only add start parameter for numbered lists
+            if is_numbered:
+                list_kwargs['start'] = 1
+            list_flowable = ListFlowable(
+                [ListItem(Paragraph(_markdown_to_reportlab(item), list_style))
+                 for item in current_list_items],
+                **list_kwargs,
+            )
+            flowables.append(list_flowable)
+            current_list_items = []
+            current_list_type = None
+
+    for line in lines:
+        stripped = line.strip()
+
+        # Skip empty lines but flush accumulated content
+        if not stripped:
+            flush_paragraph()
+            flush_list()
+            continue
+
+        # Check for headers (### Header)
+        header_match = re.match(r'^(#{1,4})\s+(.+)$', stripped)
+        if header_match:
+            flush_paragraph()
+            flush_list()
+            header_text = header_match.group(2)
+            # Remove any bold markers from header text
+            header_text = re.sub(r'\*\*(.+?)\*\*', r'\1', header_text)
+            flowables.append(Spacer(1, 8))
+            flowables.append(Paragraph(header_text, heading_style))
+            continue
+
+        # Check for bullet list items (- item or * item)
+        bullet_match = re.match(r'^[-*]\s+(.+)$', stripped)
+        if bullet_match:
+            flush_paragraph()
+            if current_list_type == 'numbered':
+                flush_list()
+            current_list_type = 'bullet'
+            current_list_items.append(bullet_match.group(1))
+            continue
+
+        # Check for numbered list items (1. item)
+        numbered_match = re.match(r'^\d+\.\s+(.+)$', stripped)
+        if numbered_match:
+            flush_paragraph()
+            if current_list_type == 'bullet':
+                flush_list()
+            current_list_type = 'numbered'
+            current_list_items.append(numbered_match.group(1))
+            continue
+
+        # Regular text - accumulate for paragraph
+        flush_list()
+        current_paragraph_lines.append(stripped)
+
+    # Flush any remaining content
+    flush_paragraph()
+    flush_list()
+
+    return flowables
 
 
 class ExportService:
@@ -115,8 +239,9 @@ class ExportService:
         # Add sections from content
         if document.content and "sections" in document.content:
             for section in document.content["sections"]:
-                # Section title
-                doc.add_heading(section.get("title", "Untitled Section"), level=1)
+                # Section title (check both 'title' and 'name' keys for compatibility)
+                section_title = section.get("title") or section.get("name") or "Untitled Section"
+                doc.add_heading(section_title, level=1)
 
                 # Section content
                 content = section.get("content", "")
@@ -233,6 +358,26 @@ class ExportService:
             spaceAfter=12,
         )
 
+        # Style for sub-headers within sections (### headers in markdown)
+        sub_heading_style = ParagraphStyle(
+            "SubHeading",
+            parent=styles["Heading3"],
+            fontSize=12,
+            spaceBefore=12,
+            spaceAfter=8,
+            fontName="Helvetica-Bold",
+        )
+
+        # Style for list items
+        list_item_style = ParagraphStyle(
+            "ListItem",
+            parent=styles["Normal"],
+            fontSize=11,
+            spaceAfter=4,
+            leading=14,
+            leftIndent=10,
+        )
+
         story = []
 
         # Title
@@ -249,23 +394,16 @@ class ExportService:
         # Sections
         if document.content and "sections" in document.content:
             for section in document.content["sections"]:
-                # Section title
-                section_title = section.get("title", "Untitled Section")
+                # Section title (check both 'title' and 'name' keys for compatibility)
+                section_title = section.get("title") or section.get("name") or "Untitled Section"
                 story.append(Paragraph(section_title, section_title_style))
 
-                # Section content
+                # Section content - parse markdown formatting
                 content = section.get("content", "")
-                # Split by paragraphs and add each
-                for para_text in content.split("\n\n"):
-                    if para_text.strip():
-                        # Escape XML special characters
-                        safe_text = (
-                            para_text.strip()
-                            .replace("&", "&amp;")
-                            .replace("<", "&lt;")
-                            .replace(">", "&gt;")
-                        )
-                        story.append(Paragraph(safe_text, body_style))
+                content_flowables = _parse_markdown_content(
+                    content, body_style, sub_heading_style, list_item_style
+                )
+                story.extend(content_flowables)
 
                 # Section confidence
                 confidence = section.get("confidence")
@@ -368,8 +506,9 @@ class ExportService:
         # Sections
         if document.content and "sections" in document.content:
             for section in document.content["sections"]:
-                # Section title
-                lines.append(f"## {section.get('title', 'Untitled Section')}")
+                # Section title (check both 'title' and 'name' keys for compatibility)
+                section_title = section.get("title") or section.get("name") or "Untitled Section"
+                lines.append(f"## {section_title}")
                 lines.append("")
 
                 # Section content

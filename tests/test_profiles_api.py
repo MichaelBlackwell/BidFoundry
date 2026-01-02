@@ -202,3 +202,85 @@ class TestDeleteProfile:
         """Should return 404 for non-existent profile."""
         response = await client.delete("/api/profiles/nonexistent-id")
         assert response.status_code == 404
+
+
+class TestCertificationsAndPastPerformance:
+    """Tests for certifications and past performance fields."""
+
+    async def test_certifications_saved_and_returned(self, client):
+        """Should save and return certifications correctly."""
+        profile_data = {
+            "name": "Test Company",
+            "certifications": ["8(a)", "HUBZone", "SDVOSB"],
+        }
+
+        # Create profile
+        create_response = await client.post("/api/profiles", json=profile_data)
+        assert create_response.status_code == 201
+        created = create_response.json()
+        assert created["certifications"] == ["8(a)", "HUBZone", "SDVOSB"]
+
+        # Get profile and verify
+        get_response = await client.get(f"/api/profiles/{created['id']}")
+        assert get_response.status_code == 200
+        fetched = get_response.json()
+        assert fetched["certifications"] == ["8(a)", "HUBZone", "SDVOSB"]
+
+    async def test_past_performance_saved_and_returned(self, client):
+        """Should save and return pastPerformance correctly."""
+        profile_data = {
+            "name": "Test Company",
+            "pastPerformance": ["Contract ABC", "Contract DEF"],
+        }
+
+        # Create profile
+        create_response = await client.post("/api/profiles", json=profile_data)
+        assert create_response.status_code == 201
+        created = create_response.json()
+        assert created["pastPerformance"] == ["Contract ABC", "Contract DEF"]
+
+        # Get profile and verify
+        get_response = await client.get(f"/api/profiles/{created['id']}")
+        assert get_response.status_code == 200
+        fetched = get_response.json()
+        assert fetched["pastPerformance"] == ["Contract ABC", "Contract DEF"]
+
+    async def test_update_certifications(self, client, sample_profile_data):
+        """Should update certifications correctly."""
+        # Create profile
+        create_response = await client.post("/api/profiles", json=sample_profile_data)
+        profile_id = create_response.json()["id"]
+
+        # Update certifications
+        update_response = await client.put(
+            f"/api/profiles/{profile_id}",
+            json={"certifications": ["WOSB", "EDWOSB"]},
+        )
+        assert update_response.status_code == 200
+        updated = update_response.json()
+        assert updated["certifications"] == ["WOSB", "EDWOSB"]
+
+        # Verify via get
+        get_response = await client.get(f"/api/profiles/{profile_id}")
+        fetched = get_response.json()
+        assert fetched["certifications"] == ["WOSB", "EDWOSB"]
+
+    async def test_update_past_performance(self, client, sample_profile_data):
+        """Should update pastPerformance correctly."""
+        # Create profile
+        create_response = await client.post("/api/profiles", json=sample_profile_data)
+        profile_id = create_response.json()["id"]
+
+        # Update past performance
+        update_response = await client.put(
+            f"/api/profiles/{profile_id}",
+            json={"pastPerformance": ["New Contract X", "New Contract Y"]},
+        )
+        assert update_response.status_code == 200
+        updated = update_response.json()
+        assert updated["pastPerformance"] == ["New Contract X", "New Contract Y"]
+
+        # Verify via get
+        get_response = await client.get(f"/api/profiles/{profile_id}")
+        fetched = get_response.json()
+        assert fetched["pastPerformance"] == ["New Contract X", "New Contract Y"]

@@ -6,7 +6,68 @@ These functions convert company profile dictionary data into formatted
 strings suitable for inclusion in LLM prompts.
 """
 
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Union
+
+
+def extract_certification_type(cert: Union[str, Dict[str, Any]]) -> str:
+    """
+    Extract certification type from either a string or dict format.
+
+    The database may store certifications as simple strings (e.g., "8(a)")
+    or as dictionaries (e.g., {"cert_type": "8(a)", "expiration_date": "..."}).
+
+    Args:
+        cert: Either a certification string or dictionary
+
+    Returns:
+        The certification type string
+    """
+    if isinstance(cert, str):
+        return cert
+    return cert.get('cert_type', '') if isinstance(cert, dict) else str(cert)
+
+
+def extract_certification_types(certs: List[Union[str, Dict[str, Any]]]) -> List[str]:
+    """
+    Extract certification types from a list of certifications.
+
+    Args:
+        certs: List of certifications (strings or dicts)
+
+    Returns:
+        List of certification type strings
+    """
+    return [extract_certification_type(c) for c in certs if extract_certification_type(c)]
+
+
+def extract_past_performance_name(pp: Union[str, Dict[str, Any]]) -> str:
+    """
+    Extract past performance name/description from either a string or dict format.
+
+    Args:
+        pp: Either a past performance string or dictionary
+
+    Returns:
+        The past performance name/description string
+    """
+    if isinstance(pp, str):
+        return pp
+    if isinstance(pp, dict):
+        return pp.get('contract_name') or pp.get('description', '')
+    return str(pp)
+
+
+def extract_past_performance_names(performances: List[Union[str, Dict[str, Any]]]) -> List[str]:
+    """
+    Extract past performance names from a list of past performances.
+
+    Args:
+        performances: List of past performances (strings or dicts)
+
+    Returns:
+        List of past performance name strings
+    """
+    return [extract_past_performance_name(pp) for pp in performances if extract_past_performance_name(pp)]
 
 
 def format_company_identifiers(profile: Dict[str, Any]) -> List[str]:

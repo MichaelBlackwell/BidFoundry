@@ -284,3 +284,94 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* Entry type icon */
+.debate-log__entry-icon {
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+/* New entry types */
+.debate-log__entry--draft {
+  border-left-color: var(--color-blue-team, #3b82f6);
+}
+
+.debate-log__entry--orchestrator,
+.debate-log__entry--round-marker {
+  border-left-color: var(--color-arbiter, #f59e0b);
+  background-color: rgba(245, 158, 11, 0.08);
+}
+
+/* Category-based entry styling */
+.debate-log__entry--category-orchestrator {
+  border-left-color: var(--color-arbiter, #f59e0b);
+  background: linear-gradient(to right, rgba(245, 158, 11, 0.1), transparent);
+}
+
+.debate-log__entry--category-blue {
+  border-left-color: var(--color-blue-team, #3b82f6);
+}
+
+.debate-log__entry--category-red {
+  border-left-color: var(--color-red-team, #ef4444);
+}
+
+/* Type badge colors based on category */
+.debate-log__entry-type--orchestrator {
+  background: var(--color-arbiter, #f59e0b);
+  color: white;
+}
+
+.debate-log__entry-type--blue {
+  background: var(--color-blue-team, #3b82f6);
+  color: white;
+}
+
+.debate-log__entry-type--red {
+  background: var(--color-red-team, #ef4444);
+  color: white;
+}
+
+/* Metadata display for orchestrator entries */
+.debate-log__entry-metadata {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.debate-log__consensus-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  background: var(--color-success, #22c55e);
+  color: white;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  border-radius: 9999px;
+}
+
+.debate-log__consensus-badge::before {
+  content: '✓';
+}
+
+.debate-log__resolution {
+  display: inline-flex;
+  padding: 0.125rem 0.5rem;
+  background: var(--color-surface-tertiary, #e2e8f0);
+  color: var(--color-text-secondary, #64748b);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  border-radius: 0.25rem;
+}
+
+.debate-log__stat {
+  display: inline-flex;
+  padding: 0.125rem 0.5rem;
+  background: var(--color-surface-tertiary, #e2e8f0);
+  color: var(--color-text-secondary, #64748b);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  border-radius: 0.25rem;
+}

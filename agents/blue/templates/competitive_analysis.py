@@ -43,13 +43,16 @@ class CompetitiveAnalysisTemplate(DocumentTemplate):
                 description="High-level summary of competitive landscape and key findings",
                 min_words=100,
                 max_words=300,
+                required=True,
                 guidance=(
                     "Provide a concise overview of:\n"
-                    "- The opportunity being analyzed\n"
-                    "- Number and strength of competitors\n"
-                    "- Our company's competitive position (strong/moderate/weak)\n"
-                    "- Key recommendations for competitive strategy\n"
-                    "- Overall win probability assessment"
+                    "- The opportunity being analyzed (title, agency, value)\n"
+                    "- Number and strength of competitors (e.g., '5-7 strong competitors expected')\n"
+                    "- Incumbent status (name if known, advantage level)\n"
+                    "- Our company's competitive position (Frontrunner/Competitive/Underdog)\n"
+                    "- Win probability estimate (percentage with rationale)\n"
+                    "- Top 2-3 strategic recommendations\n"
+                    "This section must stand alone as a complete briefing."
                 ),
             ),
             SectionSpec(
@@ -58,14 +61,18 @@ class CompetitiveAnalysisTemplate(DocumentTemplate):
                 description="Summary of market dynamics and competitive density",
                 min_words=150,
                 max_words=400,
+                required=True,
                 dependencies=["Executive Summary"],
                 guidance=(
                     "Describe the competitive environment:\n"
-                    "- Number of expected competitors\n"
-                    "- Incumbent status and advantage level\n"
-                    "- Set-aside implications for competition\n"
-                    "- Historical award patterns for similar work\n"
-                    "- Key evaluation factors that will drive selection"
+                    "- Competitive density (Low: 2-3 / Medium: 4-6 / High: 7+)\n"
+                    "- Incumbent name, contract value, and years on contract\n"
+                    "- Incumbent advantage level (Strong/Moderate/Weak/None)\n"
+                    "- Set-aside status and implications for competition\n"
+                    "- Historical award patterns (who wins similar work?)\n"
+                    "- Key evaluation factors from the RFP/RFI\n"
+                    "- Procurement approach (LPTA, Best Value, Trade-off)\n"
+                    "- Any pre-RFP intelligence gathered"
                 ),
             ),
             SectionSpec(
@@ -74,17 +81,29 @@ class CompetitiveAnalysisTemplate(DocumentTemplate):
                 description="Detailed profiles of key competitors",
                 min_words=300,
                 max_words=800,
+                required=True,
                 dependencies=["Competitive Landscape Overview"],
                 guidance=(
-                    "Profile the top 3-5 competitors:\n"
-                    "For each competitor include:\n"
-                    "- Company name and basic info\n"
-                    "- Relevant past performance\n"
-                    "- Known strengths for this opportunity\n"
-                    "- Known weaknesses or vulnerabilities\n"
-                    "- Likely bid strategy\n"
-                    "- Potential teaming partners\n"
-                    "Flag the incumbent separately if applicable."
+                    "Profile the top 3-5 competitors. For EACH competitor include:\n\n"
+                    "**Company Overview:**\n"
+                    "- Company name, size, and small business status\n"
+                    "- Relevant NAICS codes and certifications\n\n"
+                    "**Relevant Experience:**\n"
+                    "- Specific contracts with this agency\n"
+                    "- Similar scope/value contracts elsewhere\n"
+                    "- Known CPARS ratings\n\n"
+                    "**Strengths (for this opportunity):**\n"
+                    "- Technical capabilities alignment\n"
+                    "- Relationship/incumbency advantages\n"
+                    "- Pricing advantages\n\n"
+                    "**Weaknesses/Vulnerabilities:**\n"
+                    "- Performance issues or protests\n"
+                    "- Capability gaps\n"
+                    "- Capacity constraints\n\n"
+                    "**Likely Strategy:**\n"
+                    "- Expected bid approach\n"
+                    "- Likely teaming partners\n\n"
+                    "Mark INCUMBENT clearly. Rate each: High/Medium/Low threat."
                 ),
             ),
             SectionSpec(
@@ -93,14 +112,22 @@ class CompetitiveAnalysisTemplate(DocumentTemplate):
                 description="Side-by-side comparison on key factors",
                 min_words=200,
                 max_words=500,
+                required=True,
                 dependencies=["Competitor Profiles"],
                 guidance=(
-                    "Create a comparative assessment:\n"
-                    "- Compare on each major evaluation factor\n"
-                    "- Rate as: Advantage / Neutral / Disadvantage\n"
-                    "- Include specific evidence for ratings\n"
-                    "- Consider technical, management, past performance, and price\n"
-                    "Present in a clear, structured format."
+                    "Create a structured comparative assessment:\n\n"
+                    "**Comparison Matrix:**\n"
+                    "Rate each competitor (including us) on each evaluation factor:\n"
+                    "- Technical Approach: Advantage (+) / Neutral (=) / Disadvantage (-)\n"
+                    "- Management Approach: +/=/- \n"
+                    "- Past Performance: +/=/- \n"
+                    "- Price Competitiveness: +/=/- \n"
+                    "- Key Personnel: +/=/- \n"
+                    "- Small Business/Socioeconomic: +/=/- \n\n"
+                    "**Evidence for Ratings:**\n"
+                    "Provide specific evidence for each rating (not just opinions).\n\n"
+                    "**Summary Score:**\n"
+                    "Count advantages vs disadvantages for overall ranking."
                 ),
             ),
             SectionSpec(
@@ -109,15 +136,24 @@ class CompetitiveAnalysisTemplate(DocumentTemplate):
                 description="Assessment of our company's position in this competition",
                 min_words=150,
                 max_words=400,
+                required=True,
                 dependencies=["Comparative Analysis"],
                 guidance=(
-                    "Assess our competitive position:\n"
-                    "- Where we have competitive advantage\n"
-                    "- Where we are at parity\n"
-                    "- Where we are at disadvantage\n"
-                    "- Overall assessment (frontrunner/competitive/underdog)\n"
-                    "- Key proof points for our position\n"
-                    "Be honest about gaps while highlighting strengths."
+                    "Assess our competitive position honestly:\n\n"
+                    "**Competitive Advantages:**\n"
+                    "- List specific advantages with proof points\n"
+                    "- Quantify where possible (e.g., '3 similar contracts vs competitors' 1')\n\n"
+                    "**At Parity:**\n"
+                    "- Areas where we match competitors\n"
+                    "- Why parity is acceptable or how to differentiate\n\n"
+                    "**Competitive Disadvantages:**\n"
+                    "- Be honest about gaps\n"
+                    "- Include mitigation strategies for each\n\n"
+                    "**Overall Position Assessment:**\n"
+                    "- Frontrunner: Clear path to win\n"
+                    "- Competitive: Viable with strong execution\n"
+                    "- Underdog: Uphill battle, needs breakthrough\n\n"
+                    "**Win Probability:** X% with rationale"
                 ),
             ),
             SectionSpec(
@@ -126,16 +162,29 @@ class CompetitiveAnalysisTemplate(DocumentTemplate):
                 description="Strategic recommendations for winning",
                 min_words=200,
                 max_words=500,
+                required=True,
                 dependencies=["Our Competitive Position"],
                 guidance=(
-                    "Provide actionable strategic recommendations:\n"
-                    "- How to leverage our advantages\n"
-                    "- How to mitigate our disadvantages\n"
-                    "- Ghosting strategies against key competitors\n"
-                    "- Teaming recommendations if applicable\n"
-                    "- Pricing strategy implications\n"
-                    "- Key themes to emphasize\n"
-                    "Each recommendation should be specific and actionable."
+                    "Provide actionable strategic recommendations:\n\n"
+                    "**Leverage Advantages:**\n"
+                    "- How to emphasize and prove our strengths\n"
+                    "- Proposal themes that highlight advantages\n\n"
+                    "**Mitigate Disadvantages:**\n"
+                    "- Specific actions to close gaps before proposal\n"
+                    "- Teaming to fill capability gaps\n"
+                    "- Messaging to neutralize weaknesses\n\n"
+                    "**Ghosting Strategies:**\n"
+                    "- How to highlight competitor weaknesses without naming them\n"
+                    "- Evaluation criteria language that favors us\n\n"
+                    "**Teaming Recommendations:**\n"
+                    "- Specific partners to pursue and why\n"
+                    "- Work share considerations\n\n"
+                    "**Pricing Strategy:**\n"
+                    "- Price-to-win guidance based on competitive intel\n"
+                    "- Aggressive vs. premium positioning\n\n"
+                    "**Key Win Themes:**\n"
+                    "- 3-5 themes that differentiate us\n"
+                    "Each recommendation must be SPECIFIC and ACTIONABLE."
                 ),
             ),
         ]

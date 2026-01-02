@@ -8,6 +8,8 @@ Board (SSEB) to identify weaknesses, deficiencies, and compliance gaps.
 
 from typing import Dict, Any, List, Optional
 
+from agents.utils.profile_formatter import extract_certification_types
+
 
 EVALUATOR_SIMULATOR_SYSTEM_PROMPT = """You are the Evaluator Simulator, an adversarial agent that simulates the perspective of a government Source Selection Evaluation Board (SSEB) member.
 
@@ -112,6 +114,9 @@ Be rigorous but fair:
 - Use correct FAR terminology
 
 Your ultimate goal is to prepare the proposal for the scrutiny of actual government evaluators.
+
+## Output Length
+Keep responses concise - approximately 1 page (~500-600 words). Be direct and focus on the most critical points. Prioritize actionable insights over comprehensive coverage.
 """
 
 
@@ -210,7 +215,7 @@ def get_evaluation_prompt(
 
         certs = company_profile.get('certifications', [])
         if certs:
-            cert_types = [c.get('cert_type') for c in certs if c.get('cert_type')]
+            cert_types = extract_certification_types(certs)
             prompt_parts.append(f"**Certifications**: {', '.join(cert_types)}")
 
         past_perf = company_profile.get('past_performance', [])

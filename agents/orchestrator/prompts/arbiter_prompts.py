@@ -77,6 +77,9 @@ Ensure all outputs are:
 - Aligned with the target agency's mission
 - Actionable with clear next steps
 - Honest about limitations and risks
+
+## Output Length
+Keep responses concise - approximately 1 page (~500-600 words). Be direct and focus on the most critical points. Prioritize actionable insights over comprehensive coverage.
 """
 
 

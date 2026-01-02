@@ -11,8 +11,12 @@ import { memo, useCallback, useMemo, useState } from 'react';
 import { ConfidenceMeter } from './ConfidenceMeter';
 import { SectionList, type SectionRevision } from './SectionList';
 import { PreviewControls, type ExportFormat } from './PreviewControls';
+import { AgentInsightsPanel } from './AgentInsightsPanel';
 import type { DocumentDraft, Critique } from '../../types';
+import type { AgentInsights } from '../../stores/swarmStore';
 import './DocumentPreview.css';
+
+type PreviewTab = 'document' | 'insights';
 
 export interface DocumentPreviewProps {
   /** The current document draft */
@@ -29,6 +33,8 @@ export interface DocumentPreviewProps {
   revisionNotes?: Record<string, string>;
   /** Whether the document is still being generated */
   isGenerating?: boolean;
+  /** Agent insights from blue team agents */
+  agentInsights?: AgentInsights;
   /** Callback when a section is clicked (to jump to debate thread) */
   onSectionClick?: (sectionId: string) => void;
   /** Callback when export is requested */
@@ -49,6 +55,7 @@ export const DocumentPreview = memo(function DocumentPreview({
   revisingSectionIds = [],
   revisionNotes = {},
   isGenerating = false,
+  agentInsights,
   onSectionClick,
   onExport,
   isExpanded = false,
@@ -56,6 +63,15 @@ export const DocumentPreview = memo(function DocumentPreview({
   className = '',
 }: DocumentPreviewProps) {
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<PreviewTab>('document');
+
+  // Check if there are any agent insights to show
+  const hasInsights = agentInsights && (
+    Object.keys(agentInsights.marketIntelligence).length > 0 ||
+    Object.keys(agentInsights.captureStrategy).length > 0 ||
+    Object.keys(agentInsights.complianceStatus).length > 0 ||
+    agentInsights.summary.agentsContributed.length > 0
+  );
 
   // Calculate revisions by comparing with previous draft
   const revisions = useMemo((): SectionRevision[] => {
@@ -183,17 +199,56 @@ export const DocumentPreview = memo(function DocumentPreview({
         )}
       </div>
 
-      {/* Section list */}
+      {/* Tab navigation */}
+      {hasInsights && (
+        <nav className="document-preview__tabs" role="tablist" aria-label="Preview tabs">
+          <button
+            role="tab"
+            aria-selected={activeTab === 'document'}
+            aria-controls="document-panel"
+            className={`document-preview__tab ${activeTab === 'document' ? 'document-preview__tab--active' : ''}`}
+            onClick={() => setActiveTab('document')}
+          >
+            Document
+          </button>
+          <button
+            role="tab"
+            aria-selected={activeTab === 'insights'}
+            aria-controls="insights-panel"
+            className={`document-preview__tab ${activeTab === 'insights' ? 'document-preview__tab--active' : ''}`}
+            onClick={() => setActiveTab('insights')}
+          >
+            Agent Insights
+            {agentInsights?.summary.agentsContributed.length > 0 && (
+              <span className="document-preview__tab-badge">
+                {agentInsights.summary.agentsContributed.length}
+              </span>
+            )}
+          </button>
+        </nav>
+      )}
+
+      {/* Content based on active tab */}
       <div className="document-preview__content">
-        <SectionList
-          sections={sections}
-          critiques={critiques}
-          revisions={revisions}
-          revisingSectionIds={revisingSectionIds}
-          selectedSectionId={selectedSectionId}
-          onSectionClick={handleSectionClick}
-          emptyMessage="No sections in this document yet."
-        />
+        {activeTab === 'document' ? (
+          <div id="document-panel" role="tabpanel" aria-labelledby="document-tab">
+            <SectionList
+              sections={sections}
+              critiques={critiques}
+              revisions={revisions}
+              revisingSectionIds={revisingSectionIds}
+              selectedSectionId={selectedSectionId}
+              onSectionClick={handleSectionClick}
+              emptyMessage="No sections in this document yet."
+            />
+          </div>
+        ) : (
+          <div id="insights-panel" role="tabpanel" aria-labelledby="insights-tab">
+            {agentInsights && (
+              <AgentInsightsPanel insights={agentInsights} />
+            )}
+          </div>
+        )}
       </div>
 
       {/* Footer with section count */}

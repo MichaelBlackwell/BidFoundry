@@ -16,6 +16,7 @@ from agents.utils.profile_formatter import (
     format_sam_registration,
     format_hubzone_info,
     format_federal_history,
+    extract_certification_types,
 )
 
 
@@ -55,6 +56,9 @@ Your analyses should:
 - Prioritize issues by risk level (Critical, High, Medium, Low)
 - Provide specific remediation steps for gaps
 - Flag items requiring human review or legal counsel
+
+## Output Length
+Keep responses concise - approximately 1 page (~500-600 words). Be direct and focus on the most critical points. Prioritize actionable insights over comprehensive coverage.
 """
 
 
@@ -551,7 +555,7 @@ def get_compliance_checklist_prompt(
 
         certs = company_profile.get('certifications', [])
         if certs:
-            cert_types = [c.get('cert_type') for c in certs]
+            cert_types = extract_certification_types(certs)
             prompt_parts.append(f"**Certifications**: {', '.join(cert_types)}")
 
         prompt_parts.append("")

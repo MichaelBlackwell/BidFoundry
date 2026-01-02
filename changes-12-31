@@ -1,0 +1,66 @@
+let's shorten LLM responses by asking for about 1 page in output. Do this for all agents
+
+Claude’s Plan
+Plan: Shorten LLM Responses to ~1 Page for All Agents
+Goal
+Limit all agent LLM responses to approximately 1 page (~500-600 words, ~750-1000 tokens).
+Files to Modify
+1. Configuration (Token Limits)
+File: agents/config.py Reduce max_tokens in DEFAULT_AGENT_CONFIGS:
+Strategy Architect: 8192 → 1500
+Market Analyst: 4096 → 1500
+Compliance Navigator: 4096 → 1500
+Capture Strategist: 4096 → 1500
+Devil's Advocate: 4096 → 1500
+Competitor Simulator: 4096 → 1500
+Evaluator Simulator: 4096 → 1500
+Risk Assessor: 4096 → 1500
+Arbiter: 8192 → 1500
+Also update:
+LLMConfig.max_tokens default: 4096 → 1500
+AgentConfig.max_output_tokens default: 4096 → 1500
+2. System Prompts (Conciseness Instructions)
+Add a conciseness directive to each system prompt: Blue Team Prompts:
+agents/blue/prompts/strategy_architect_prompts.py - STRATEGY_ARCHITECT_SYSTEM_PROMPT
+agents/blue/prompts/market_analyst_prompts.py - MARKET_ANALYST_SYSTEM_PROMPT
+agents/blue/prompts/compliance_navigator_prompts.py - COMPLIANCE_NAVIGATOR_SYSTEM_PROMPT
+agents/blue/prompts/capture_strategist_prompts.py - CAPTURE_STRATEGIST_SYSTEM_PROMPT
+Red Team Prompts:
+agents/red/prompts/devils_advocate_prompts.py - DEVILS_ADVOCATE_SYSTEM_PROMPT
+agents/red/prompts/competitor_simulator_prompts.py - COMPETITOR_SIMULATOR_SYSTEM_PROMPT
+agents/red/prompts/evaluator_simulator_prompts.py - EVALUATOR_SIMULATOR_SYSTEM_PROMPT
+agents/red/prompts/risk_assessor_prompts.py - RISK_ASSESSOR_SYSTEM_PROMPT
+Orchestrator Prompts:
+agents/orchestrator/prompts/arbiter_prompts.py - ARBITER_SYSTEM_PROMPT
+Instruction to add to each system prompt:
+
+## Output Length
+Keep responses concise - approximately 1 page (~500-600 words). Be direct and focus on the most critical points. Prioritize actionable insights over comprehensive coverage.
+Implementation Order
+Update agents/config.py - reduce token limits
+Update each of the 9 system prompts with conciseness instructions
+User approved the plan
+Now let me implement the plan. I'll start by creating a todo list and then make the changes.
+Update Todos
+
+Update agents/config.py - reduce token limits
+
+Update strategy_architect_prompts.py with conciseness instruction
+
+Update market_analyst_prompts.py with conciseness instruction
+
+Update compliance_navigator_prompts.py with conciseness instruction
+
+Update capture_strategist_prompts.py with conciseness instruction
+
+Update devils_advocate_prompts.py with conciseness instruction
+
+Update competitor_simulator_prompts.py with conciseness instruction
+
+Update evaluator_simulator_prompts.py with conciseness instruction
+
+Update risk_assessor_prompts.py with conciseness instruction
+
+Update arbiter_prompts.py with conciseness instruction
+
+

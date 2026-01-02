@@ -80,6 +80,7 @@ export function useSwarmWebSocket(
   const setEscalation = useSwarmStore((s) => s.setEscalation);
   const setError = useSwarmStore((s) => s.setError);
   const setStatus = useSwarmStore((s) => s.setStatus);
+  const updateAgentInsights = useSwarmStore((s) => s.updateAgentInsights);
   const generationStatus = useSwarmStore((s) => s.status);
   const drafts = useSwarmStore((s) => s.drafts);
 
@@ -248,6 +249,13 @@ export function useSwarmWebSocket(
     [updateDraft]
   );
 
+  const handleAgentInsightsUpdate = useCallback(
+    (payload: { agentRole: string; agentName: string; content: string | null; metadata: Record<string, unknown> }) => {
+      updateAgentInsights(payload);
+    },
+    [updateAgentInsights]
+  );
+
   const handleEscalationTriggered = useCallback(
     (payload: EscalationTriggeredPayload) => {
       setEscalation({
@@ -300,6 +308,7 @@ export function useSwarmWebSocket(
     sub('agent:complete', handleAgentComplete);
     sub('draft:update', handleDraftUpdate);
     sub('confidence:update', handleConfidenceUpdate);
+    sub('agent_insights:update', handleAgentInsightsUpdate);
     sub('escalation:triggered', handleEscalationTriggered);
     sub('generation:complete', handleGenerationComplete);
     sub('generation:error', handleGenerationError);
@@ -318,6 +327,7 @@ export function useSwarmWebSocket(
     handleAgentComplete,
     handleDraftUpdate,
     handleConfidenceUpdate,
+    handleAgentInsightsUpdate,
     handleEscalationTriggered,
     handleGenerationComplete,
     handleGenerationError,

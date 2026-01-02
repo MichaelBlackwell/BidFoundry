@@ -85,7 +85,11 @@ export function useHumanReview(options: UseHumanReviewOptions = {}): UseHumanRev
   // Close modal handler
   const closeModal = useCallback(() => {
     setIsOpen(false);
-  }, []);
+    // If we're in review status, transition to complete to prevent modal from reopening
+    if (status === 'review') {
+      setStatus('complete');
+    }
+  }, [status, setStatus]);
 
   // Approve handler
   const approve = useCallback(async () => {

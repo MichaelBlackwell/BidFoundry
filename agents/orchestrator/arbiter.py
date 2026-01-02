@@ -33,6 +33,14 @@ from .workflow import DocumentWorkflow, WorkflowConfig
 from .consensus import ConsensusDetector, ConsensusResult
 from .synthesis import DocumentSynthesizer
 
+# Import template registry to get section requirements
+try:
+    from agents.blue.templates.base import get_template_for_document_type
+    TEMPLATES_AVAILABLE = True
+except ImportError:
+    TEMPLATES_AVAILABLE = False
+    get_template_for_document_type = None
+
 
 logger = logging.getLogger(__name__)
 
@@ -92,8 +100,15 @@ class FinalOutput:
     confidence: Optional[ConfidenceScore] = None
     red_team_report: Dict[str, Any] = field(default_factory=dict)
 
-    # Blue team contributions (from all agents during defense rounds)
+    # Blue team contributions (from all agents during all rounds)
     blue_team_contributions: List[Dict[str, Any]] = field(default_factory=list)
+
+    # Agent insights (consolidated analysis from all blue team agents)
+    # Contains structured data from Market Analyst, Capture Strategist, Compliance Navigator
+    agent_insights: Dict[str, Any] = field(default_factory=dict)
+
+    # Debate log (complete history of critiques and responses)
+    debate_log: List[Dict[str, Any]] = field(default_factory=list)
 
     # Status
     success: bool = True
@@ -110,6 +125,12 @@ class FinalOutput:
     started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
 
+    # Document version history (state after each round)
+    document_versions: List[Dict[str, Any]] = field(default_factory=list)
+
+    # Contributing agents (list of agents that provided input)
+    contributing_agents: List[str] = field(default_factory=list)
+
     @property
     def duration_seconds(self) -> float:
         if self.started_at and self.completed_at:
@@ -125,6 +146,8 @@ class FinalOutput:
             "confidence": self.confidence.to_dict() if self.confidence else None,
             "red_team_report": self.red_team_report,
             "blue_team_contributions": self.blue_team_contributions,
+            "agent_insights": self.agent_insights,
+            "debate_log": self.debate_log,
             "success": self.success,
             "requires_human_review": self.requires_human_review,
             "review_reasons": self.review_reasons,
@@ -135,6 +158,8 @@ class FinalOutput:
             "started_at": self.started_at.isoformat() if self.started_at else None,
             "completed_at": self.completed_at.isoformat() if self.completed_at else None,
             "duration_seconds": self.duration_seconds,
+            "document_versions": self.document_versions,
+            "contributing_agents": self.contributing_agents,
         }
 
 
@@ -183,6 +208,9 @@ class ArbiterAgent(OrchestratorAgent):
 
         # Configuration
         self._workflow_config: Optional[WorkflowConfig] = None
+
+        # Document versioning - tracks document state after each round
+        self._document_versions: List[Dict[str, Any]] = []
 
     @property
     def role(self) -> AgentRole:
@@ -291,6 +319,9 @@ class ArbiterAgent(OrchestratorAgent):
             started_at=datetime.now(timezone.utc),
         )
 
+        # Reset error tracking for this request
+        self._blue_build_errors: List[str] = []
+
         try:
             # Initialize for this request
             await self._setup_for_request(request)
@@ -319,11 +350,19 @@ class ArbiterAgent(OrchestratorAgent):
                 self.log_error("Blue team build phase produced no content")
                 output.success = False
                 output.requires_human_review = True
-                output.review_reasons.append(
-                    "Blue team failed to generate initial draft. "
-                    "This may indicate an LLM API configuration issue (missing API key) "
-                    "or a problem with the document type configuration."
-                )
+
+                # Build detailed error message with agent-specific errors
+                base_msg = "Blue team failed to generate initial draft."
+                if hasattr(self, '_blue_build_errors') and self._blue_build_errors:
+                    error_details = "; ".join(self._blue_build_errors)
+                    output.review_reasons.append(f"{base_msg} Errors: {error_details}")
+                else:
+                    output.review_reasons.append(
+                        f"{base_msg} "
+                        "This may indicate an LLM API configuration issue (missing API key) "
+                        "or a problem with the document type configuration."
+                    )
+
                 # Skip remaining phases since we have no content to work with
                 output.completed_at = datetime.now(timezone.utc)
                 await self._message_bus.stop()
@@ -378,12 +417,24 @@ class ArbiterAgent(OrchestratorAgent):
             output.confidence = confidence
             output.red_team_report = red_team_report
             output.blue_team_contributions = self._blue_team_contributions
+            output.debate_log = self._build_debate_log()
+            output.document_versions = self._document_versions  # Include version history
             output.total_rounds = self._round_manager.current_round
             output.total_critiques = len(self._all_critiques)
             output.resolved_critiques = len([
                 r for r in self._all_responses
                 if r.get("disposition") in ("Accept", "Partial Accept", "Rebut")
             ])
+
+            # Extract and include agent insights from the synthesized document
+            output.agent_insights = final_document.get("agent_insights", {})
+
+            # List all contributing agents
+            output.contributing_agents = list(set(
+                contrib.get("agent_role")
+                for contrib in self._blue_team_contributions
+                if contrib.get("agent_role")
+            ))
 
             # Check for human review requirement
             if confidence.requires_human_review:
@@ -422,6 +473,7 @@ class ArbiterAgent(OrchestratorAgent):
         self._all_critiques = []
         self._all_responses = []
         self._blue_team_contributions = []
+        self._document_versions = []  # Reset document version history
 
         # Configure round manager
         self._round_manager = RoundManager(
@@ -439,17 +491,99 @@ class ArbiterAgent(OrchestratorAgent):
             target_sections=request.target_sections,
         )
 
+    async def _publish_document_state(
+        self,
+        round_type: str,
+        round_number: int,
+        sections: Dict[str, str],
+        changes_summary: Optional[str] = None,
+    ) -> None:
+        """
+        Publish/update the current document state after each round.
+
+        This allows downstream consumers (UI, storage, etc.) to see
+        the document evolve through each round of the adversarial process.
+
+        Args:
+            round_type: The type of round just completed (BlueBuild, RedAttack, BlueDefense)
+            round_number: The round number
+            sections: Current section drafts
+            changes_summary: Optional summary of changes made in this round
+        """
+        # Create document version snapshot
+        version = {
+            "version": len(self._document_versions) + 1,
+            "round_type": round_type,
+            "round_number": round_number,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "sections": sections.copy(),
+            "section_count": len(sections),
+            "total_words": sum(len(content.split()) for content in sections.values()),
+            "changes_summary": changes_summary,
+            "critiques_pending": len(self._current_context.pending_critiques) if self._current_context else 0,
+            "critiques_resolved": len(self._current_context.resolved_critiques) if self._current_context else 0,
+        }
+
+        # Store version in history
+        self._document_versions.append(version)
+
+        # Publish document state message to message bus
+        # Include full section content so the frontend can update the preview
+        document_state_msg = create_status_message(
+            sender_role=self.role.value,
+            status_type="document_updated",
+            data={
+                "document_id": self._current_request.id if self._current_request else "",
+                "document_type": self._current_request.document_type if self._current_request else "",
+                "version": version["version"],
+                "round_type": round_type,
+                "round_number": round_number,
+                "sections": [
+                    {"name": name, "content": content}
+                    for name, content in sections.items()
+                ],
+                "section_count": len(sections),
+                "total_words": version["total_words"],
+                "changes_summary": changes_summary,
+            },
+            round_number=round_number,
+        )
+        await self._message_bus.publish(document_state_msg)
+
+        self.log_info(
+            f"Document updated after {round_type} (Round {round_number}): "
+            f"{len(sections)} sections, {version['total_words']} words"
+        )
+
     def _get_workflow_config(self, request: DocumentRequest) -> WorkflowConfig:
         """Get workflow configuration for a document type."""
-        # Default configuration
+        # Get required sections from template if available
+        required_sections = []
+        optional_sections = []
+        if TEMPLATES_AVAILABLE and get_template_for_document_type:
+            template = get_template_for_document_type(request.document_type)
+            if template:
+                required_sections = template.required_sections
+                optional_sections = [s.name for s in template.sections if not s.required]
+                self.log_info(
+                    f"Template found for '{request.document_type}': "
+                    f"{len(required_sections)} required sections, "
+                    f"{len(optional_sections)} optional sections"
+                )
+            else:
+                self.log_warning(f"No template found for document type: {request.document_type}")
+
+        # Default configuration with template sections
         config = WorkflowConfig(
             document_type=request.document_type,
             max_adversarial_rounds=request.max_adversarial_rounds,
             consensus_threshold=request.consensus_threshold,
             confidence_threshold=request.confidence_threshold,
+            required_sections=required_sections,
+            optional_sections=optional_sections,
         )
 
-        # Document-type specific overrides
+        # Document-type specific agent configurations
         document_configs = {
             "Capability Statement": WorkflowConfig(
                 document_type="Capability Statement",
@@ -462,6 +596,8 @@ class ArbiterAgent(OrchestratorAgent):
                     AgentRole.DEVILS_ADVOCATE,
                     AgentRole.EVALUATOR_SIMULATOR,
                 ],
+                required_sections=required_sections,
+                optional_sections=optional_sections,
             ),
             "Proposal Strategy": WorkflowConfig(
                 document_type="Proposal Strategy",
@@ -477,6 +613,8 @@ class ArbiterAgent(OrchestratorAgent):
                     AgentRole.EVALUATOR_SIMULATOR,
                     AgentRole.RISK_ASSESSOR,
                 ],
+                required_sections=required_sections,
+                optional_sections=optional_sections,
             ),
             "Competitive Analysis": WorkflowConfig(
                 document_type="Competitive Analysis",
@@ -490,6 +628,66 @@ class ArbiterAgent(OrchestratorAgent):
                     AgentRole.COMPETITOR_SIMULATOR,
                     AgentRole.DEVILS_ADVOCATE,
                 ],
+                required_sections=required_sections,
+                optional_sections=optional_sections,
+            ),
+            "SWOT Analysis": WorkflowConfig(
+                document_type="SWOT Analysis",
+                max_adversarial_rounds=2,
+                required_blue_agents=[
+                    AgentRole.STRATEGY_ARCHITECT,
+                    AgentRole.MARKET_ANALYST,
+                ],
+                required_red_agents=[
+                    AgentRole.DEVILS_ADVOCATE,
+                    AgentRole.RISK_ASSESSOR,
+                ],
+                required_sections=required_sections,
+                optional_sections=optional_sections,
+            ),
+            "Go-to-Market Strategy": WorkflowConfig(
+                document_type="Go-to-Market Strategy",
+                max_adversarial_rounds=2,
+                required_blue_agents=[
+                    AgentRole.STRATEGY_ARCHITECT,
+                    AgentRole.MARKET_ANALYST,
+                    AgentRole.CAPTURE_STRATEGIST,
+                ],
+                required_red_agents=[
+                    AgentRole.DEVILS_ADVOCATE,
+                    AgentRole.COMPETITOR_SIMULATOR,
+                ],
+                required_sections=required_sections,
+                optional_sections=optional_sections,
+            ),
+            "Teaming Strategy": WorkflowConfig(
+                document_type="Teaming Strategy",
+                max_adversarial_rounds=2,
+                required_blue_agents=[
+                    AgentRole.STRATEGY_ARCHITECT,
+                    AgentRole.CAPTURE_STRATEGIST,
+                ],
+                required_red_agents=[
+                    AgentRole.DEVILS_ADVOCATE,
+                    AgentRole.RISK_ASSESSOR,
+                ],
+                required_sections=required_sections,
+                optional_sections=optional_sections,
+            ),
+            "BD Pipeline": WorkflowConfig(
+                document_type="BD Pipeline",
+                max_adversarial_rounds=2,
+                required_blue_agents=[
+                    AgentRole.STRATEGY_ARCHITECT,
+                    AgentRole.MARKET_ANALYST,
+                    AgentRole.CAPTURE_STRATEGIST,
+                ],
+                required_red_agents=[
+                    AgentRole.DEVILS_ADVOCATE,
+                    AgentRole.RISK_ASSESSOR,
+                ],
+                required_sections=required_sections,
+                optional_sections=optional_sections,
             ),
         }
 
@@ -500,6 +698,11 @@ class ArbiterAgent(OrchestratorAgent):
         Execute the BlueBuild phase.
 
         Creates the initial document draft using blue team agents.
+        Collects and incorporates inputs from ALL blue team agents:
+        - Strategy Architect: Document sections
+        - Market Analyst: Market intelligence, opportunities, competitive landscape
+        - Capture Strategist: Win themes, discriminators, competitive positioning
+        - Compliance Navigator: Eligibility, compliance status, certifications
 
         Returns:
             Dictionary mapping section names to content
@@ -521,6 +724,9 @@ class ArbiterAgent(OrchestratorAgent):
         blue_agents = self._get_blue_team_agents()
 
         sections = {}
+
+        # Collect specialized agent contributions during build phase
+        agent_analyses = {}
 
         # Run each blue team agent
         for agent in blue_agents:
@@ -558,28 +764,81 @@ class ArbiterAgent(OrchestratorAgent):
                 agent.set_stream_callback(None)
 
                 if not output.success:
-                    # Log the failure with error details
+                    # Log the failure with error details and store for user visibility
                     error_msg = output.error_message or "Unknown error"
                     self.log_error(f"Blue team agent {agent.name} failed: {error_msg}")
-                elif output.sections:
-                    sections.update(output.sections)
-
-                    # Publish draft message
-                    for section_name, content in output.sections.items():
-                        msg = create_draft_message(
-                            sender_role=agent.role.value,
-                            content=content,
-                            document_id=self._current_request.id,
-                            section_name=section_name,
-                            round_number=round_num,
-                        )
-                        await self._message_bus.publish(msg)
-                        self._history.record_message(msg)
+                    # Store the error for later inclusion in review reasons
+                    if not hasattr(self, '_blue_build_errors'):
+                        self._blue_build_errors = []
+                    self._blue_build_errors.append(f"{agent.name}: {error_msg}")
                 else:
-                    self.log_warning(f"Blue team agent {agent.name} succeeded but returned no sections")
+                    # Collect sections if present
+                    if output.sections:
+                        sections.update(output.sections)
+
+                        # Publish draft message
+                        for section_name, content in output.sections.items():
+                            msg = create_draft_message(
+                                sender_role=agent.role.value,
+                                content=content,
+                                document_id=self._current_request.id,
+                                section_name=section_name,
+                                round_number=round_num,
+                            )
+                            await self._message_bus.publish(msg)
+                            self._history.record_message(msg)
+
+                    # IMPORTANT: Capture ALL agent contributions (content, metadata, analysis)
+                    # This ensures Market Analyst, Capture Strategist, and Compliance Navigator
+                    # inputs are preserved even if they don't produce traditional "sections"
+                    contribution = {
+                        "agent_role": agent.role.value,
+                        "agent_name": agent.name,
+                        "content": output.content,
+                        "content_type": output.content_type,
+                        "sections": output.sections or {},
+                        "metadata": output.metadata or {},
+                        "round_number": round_num,
+                        "round_type": "BlueBuild",
+                        "created_at": datetime.now(timezone.utc).isoformat(),
+                    }
+
+                    # Publish agent contribution to message bus for real-time frontend updates
+                    contribution_msg = create_status_message(
+                        sender_role=agent.role.value,
+                        status_type="agent_contribution",
+                        data={
+                            "agent_role": agent.role.value,
+                            "agent_name": agent.name,
+                            "content": output.content,
+                            "metadata": output.metadata or {},
+                        },
+                        round_number=round_num,
+                    )
+                    await self._message_bus.publish(contribution_msg)
+
+                    # Store agent-specific analysis data from metadata
+                    agent_analyses[agent.role.value] = {
+                        "content": output.content,
+                        "metadata": output.metadata or {},
+                    }
+
+                    self._blue_team_contributions.append(contribution)
+                    self.log_info(
+                        f"Captured contribution from {agent.name}: "
+                        f"{len(output.sections or {})} sections, "
+                        f"{len(output.content or '')} chars content, "
+                        f"{len(output.metadata or {})} metadata fields"
+                    )
+
+                    if not output.sections and not output.content:
+                        self.log_warning(f"Blue team agent {agent.name} succeeded but returned no sections or content")
 
             except Exception as e:
                 self.log_error(f"Blue team agent {agent.name} failed with exception: {e}")
+
+        # Enrich context with collected agent analyses for downstream use
+        self._current_context.custom_data["agent_analyses"] = agent_analyses
 
         # Update context with draft
         self._current_context.section_drafts = sections
@@ -593,6 +852,14 @@ class ArbiterAgent(OrchestratorAgent):
             sender_role=self.role.value,
         )
         await self._message_bus.publish(end_msg)
+
+        # Publish document state after BlueBuild round
+        await self._publish_document_state(
+            round_type="BlueBuild",
+            round_number=round_num,
+            sections=sections,
+            changes_summary=f"Initial draft created with {len(sections)} sections",
+        )
 
         return sections
 
@@ -621,12 +888,24 @@ class ArbiterAgent(OrchestratorAgent):
         # Get red team agents
         red_agents = self._get_red_team_agents()
 
+        # DEBUG: Log red team agent availability
+        self.log_info(f"RedAttack: Found {len(red_agents)} red team agents")
+        for agent in red_agents:
+            self.log_info(f"  - {agent.name} (enabled: {agent.is_enabled})")
+
         all_critiques = []
+
+        # DEBUG: Log context state for critique generation
+        self.log_info(f"RedAttack: Context has {len(self._current_context.section_drafts)} section drafts")
+        if self._current_context.section_drafts:
+            for name, content in self._current_context.section_drafts.items():
+                content_preview = content[:100] + "..." if len(content) > 100 else content
+                self.log_debug(f"  - Section '{name}': {len(content)} chars - {content_preview}")
 
         # Run each red team agent
         for agent in red_agents:
             try:
-                self.log_debug(f"Running red team agent: {agent.name}")
+                self.log_info(f"Running red team agent: {agent.name}")
 
                 # Emit agent thinking status
                 thinking_msg = create_status_message(
@@ -656,6 +935,17 @@ class ArbiterAgent(OrchestratorAgent):
 
                 agent.set_stream_callback(None)
 
+                # DEBUG: Log agent output details
+                self.log_info(
+                    f"RedAttack: Agent {agent.name} output - "
+                    f"success={output.success}, "
+                    f"critiques={len(output.critiques) if output.critiques else 0}, "
+                    f"error={output.error_message if not output.success else 'none'}"
+                )
+                if output.warnings:
+                    for warning in output.warnings:
+                        self.log_warning(f"RedAttack: Agent {agent.name} warning: {warning}")
+
                 if output.success and output.critiques:
                     # Record critiques in history and track message IDs
                     for critique in output.critiques:
@@ -674,7 +964,15 @@ class ArbiterAgent(OrchestratorAgent):
                         all_critiques.append(critique)
 
             except Exception as e:
-                self.log_error(f"Red team agent {agent.name} failed: {e}")
+                self.log_error(f"Red team agent {agent.name} failed: {e}", exc_info=True)
+
+        # DEBUG: Log final critique count
+        self.log_info(f"RedAttack: Phase complete - total critiques collected: {len(all_critiques)}")
+        if not all_critiques:
+            self.log_warning(
+                "RedAttack: No critiques generated! This could indicate: "
+                "1) LLM API issues, 2) Empty section drafts, 3) Parsing failures, or 4) Disabled agents"
+            )
 
         # Update context with pending critiques
         self._current_context.pending_critiques = all_critiques
@@ -688,6 +986,15 @@ class ArbiterAgent(OrchestratorAgent):
             sender_role=self.role.value,
         )
         await self._message_bus.publish(end_msg)
+
+        # Publish document state after RedAttack round
+        # Document content unchanged, but critiques have been added
+        await self._publish_document_state(
+            round_type="RedAttack",
+            round_number=round_num,
+            sections=self._current_draft,
+            changes_summary=f"Red team generated {len(all_critiques)} critiques",
+        )
 
         return all_critiques
 
@@ -799,7 +1106,24 @@ class ArbiterAgent(OrchestratorAgent):
                     )
                     await self._message_bus.publish(thinking_msg)
 
+                    # Set up streaming callback for real-time output
+                    async def stream_handler(chunk: str, agent_role: str = agent.role.value, rn: int = round_num):
+                        stream_msg = create_status_message(
+                            sender_role=agent_role,
+                            status_type="agent_streaming",
+                            data={"chunk": chunk},
+                            round_number=rn,
+                        )
+                        await self._message_bus.publish(stream_msg)
+
+                    def sync_stream_callback(chunk: str, handler=stream_handler):
+                        asyncio.create_task(handler(chunk))
+
+                    agent.set_stream_callback(sync_stream_callback)
+
                     output = await agent.process(self._current_context)
+
+                    agent.set_stream_callback(None)
 
                     if output.success and output.content:
                         contribution = {
@@ -827,6 +1151,22 @@ class ArbiterAgent(OrchestratorAgent):
             c for c in critiques if c.get("id") not in resolved_ids
         ]
 
+        # Update critique status based on response disposition
+        response_map = {r.get("critique_id"): r for r in all_responses}
+        for critique in critiques:
+            critique_id = critique.get("id")
+            response = response_map.get(critique_id)
+            if response:
+                disposition = response.get("disposition", "")
+                if disposition in ("Accept", "Partial Accept"):
+                    critique["status"] = "accepted"
+                elif disposition == "Rebut":
+                    critique["status"] = "rebutted"
+                elif disposition == "Acknowledge":
+                    critique["status"] = "acknowledged"
+                else:
+                    critique["status"] = "addressed"
+
         # End round
         summary = self._round_manager.end_round(check_consensus=True)
 
@@ -836,6 +1176,21 @@ class ArbiterAgent(OrchestratorAgent):
             sender_role=self.role.value,
         )
         await self._message_bus.publish(end_msg)
+
+        # Publish document state after BlueDefense round
+        # Note: Document revisions happen in _apply_accepted_changes,
+        # but we publish state here to show defense responses
+        accepted_count = len([r for r in all_responses if r.get("disposition") in ("Accept", "Partial Accept")])
+        rebutted_count = len([r for r in all_responses if r.get("disposition") == "Rebut"])
+        await self._publish_document_state(
+            round_type="BlueDefense",
+            round_number=round_num,
+            sections=self._current_draft,
+            changes_summary=(
+                f"Blue team responded to {len(all_responses)} critiques: "
+                f"{accepted_count} accepted, {rebutted_count} rebutted"
+            ),
+        )
 
         return all_responses
 
@@ -865,16 +1220,26 @@ class ArbiterAgent(OrchestratorAgent):
         if not accepted_responses:
             return updated_draft
 
-        # Get sections that need revision
+        # Get sections that need revision - only include sections that actually exist in the draft
+        # Critique target_section values can be descriptive text, not actual section names
+        available_sections = set(current_draft.keys())
         sections_to_revise = set()
+
         for response in accepted_responses:
             critique_id = response.get("critique_id")
             # Find the corresponding critique
             for critique in self._all_critiques:
                 if critique.get("id") == critique_id:
-                    section = critique.get("target_section")
-                    if section:
-                        sections_to_revise.add(section)
+                    target = critique.get("target_section", "")
+                    # Only add if it's an actual section name, not a descriptive critique target
+                    if target in available_sections:
+                        sections_to_revise.add(target)
+                    else:
+                        # Try to find the closest matching section
+                        matched = self._find_matching_section(target, available_sections)
+                        if matched:
+                            sections_to_revise.add(matched)
+                            self.log_debug(f"Mapped critique target '{target}' -> section '{matched}'")
 
         # Have Strategy Architect revise affected sections
         if sections_to_revise:
@@ -887,22 +1252,48 @@ class ArbiterAgent(OrchestratorAgent):
 
             if strategy_architect and hasattr(strategy_architect, 'revise_section'):
                 for section in sections_to_revise:
-                    section_critiques = [
-                        c for c in self._all_critiques
-                        if c.get("target_section") == section
-                    ]
+                    # Only revise sections that exist in the draft
+                    if section not in updated_draft:
+                        self.log_warning(f"Section '{section}' not in draft, skipping revision")
+                        continue
+
+                    # Find critiques for this section using flexible matching
+                    section_critiques = []
+                    for c in self._all_critiques:
+                        target = c.get("target_section", "")
+                        if target == section:
+                            section_critiques.append(c)
+                        elif self._find_matching_section(target, available_sections) == section:
+                            section_critiques.append(c)
+
+                    if not section_critiques:
+                        self.log_debug(f"No critiques found for section '{section}'")
+                        continue
+
                     try:
                         revised = await strategy_architect.revise_section(
                             self._current_context,
                             section,
                             section_critiques,
                         )
-                        updated_draft[section] = revised
+                        if revised:  # Only update if we got valid content back
+                            updated_draft[section] = revised
+                        else:
+                            self.log_warning(f"Empty revision returned for section '{section}'")
                     except Exception as e:
                         self.log_error(f"Failed to revise section {section}: {e}")
 
         # Update context
         self._current_context.section_drafts = updated_draft
+
+        # Publish document state after revisions are applied
+        if sections_to_revise:
+            await self._publish_document_state(
+                round_type="Revision",
+                round_number=self._current_context.round_number,
+                sections=updated_draft,
+                changes_summary=f"Revised {len(sections_to_revise)} section(s) based on accepted critiques: {', '.join(sections_to_revise)}",
+            )
 
         return updated_draft
 
@@ -922,6 +1313,37 @@ class ArbiterAgent(OrchestratorAgent):
         self._current_context.round_number = round_num
         self._current_context.round_type = RoundType.SYNTHESIS.value
 
+        # Validate required sections against template
+        self._missing_sections = []
+        if self._workflow_config and self._workflow_config.required_sections:
+            generated_sections = set(self._current_draft.keys())
+            required_sections = set(self._workflow_config.required_sections)
+            self._missing_sections = list(required_sections - generated_sections)
+
+            if self._missing_sections:
+                self.log_warning(
+                    f"Document is missing {len(self._missing_sections)} required section(s): "
+                    f"{', '.join(self._missing_sections)}"
+                )
+                # Add as synthetic critiques for visibility in red team report
+                for missing_section in self._missing_sections:
+                    self._all_critiques.append({
+                        "id": f"missing-section-{missing_section.lower().replace(' ', '-')}",
+                        "agent": "Template Validator",
+                        "target_section": missing_section,
+                        "challenge_type": "missing_content",
+                        "severity": "critical",
+                        "title": f"Missing Required Section: {missing_section}",
+                        "argument": (
+                            f"The '{missing_section}' section is required by the "
+                            f"{self._current_request.document_type} template but was not generated. "
+                            f"This section is essential for a complete capability statement."
+                        ),
+                        "suggested_remedy": f"Add the '{missing_section}' section with appropriate content.",
+                        "status": "unresolved",
+                        "round_number": round_num,
+                    })
+
         # Use synthesizer to compile final document
         final_document = await self._synthesizer.synthesize(
             sections=self._current_draft,
@@ -934,7 +1356,80 @@ class ArbiterAgent(OrchestratorAgent):
         # End round
         self._round_manager.end_round(check_consensus=False)
 
+        # Publish final document state after synthesis
+        missing_note = f" ({len(self._missing_sections)} missing)" if self._missing_sections else ""
+        await self._publish_document_state(
+            round_type="Synthesis",
+            round_number=round_num,
+            sections=self._current_draft,
+            changes_summary=f"Final document synthesized with {len(self._current_draft)} sections{missing_note}",
+        )
+
         return final_document
+
+    def _find_matching_section(
+        self,
+        target: str,
+        available_sections: set
+    ) -> Optional[str]:
+        """
+        Find the best matching section for a critique target.
+
+        Critique target_section values can be descriptive text like
+        "'Immediate Actions (Months 1-3)' and 'Strategic Positioning (Months 10-12)' sections"
+        instead of actual section names like "Executive Summary".
+
+        Args:
+            target: The critique target_section value
+            available_sections: Set of actual section names
+
+        Returns:
+            The best matching section name, or None if no good match
+        """
+        if not target or not available_sections:
+            return None
+
+        target_lower = target.lower()
+
+        # First, try exact match
+        if target in available_sections:
+            return target
+
+        # Try case-insensitive exact match
+        for section in available_sections:
+            if section.lower() == target_lower:
+                return section
+
+        # Try to find a section name mentioned within the target text
+        for section in available_sections:
+            section_lower = section.lower()
+            if section_lower in target_lower:
+                return section
+
+        # Try partial word matching
+        target_words = set(target_lower.replace("'", "").replace('"', "").split())
+        best_match = None
+        best_score = 0
+
+        for section in available_sections:
+            section_words = set(section.lower().split())
+            # Count overlapping words
+            overlap = len(target_words & section_words)
+            if overlap > best_score:
+                best_score = overlap
+                best_match = section
+
+        # Only return if there's at least 1 word overlap
+        if best_score >= 1:
+            return best_match
+
+        # Default to "Main Content" if available (common catch-all section)
+        for section in available_sections:
+            if "main" in section.lower() or "content" in section.lower():
+                return section
+
+        # No good match found
+        return None
 
     def _check_consensus(self) -> ConsensusResult:
         """
@@ -1056,8 +1551,60 @@ class ArbiterAgent(OrchestratorAgent):
         confidence.debate_rounds = self._round_manager.current_round
         confidence.consensus_reached = self._round_manager.consensus_reached
 
+        # Apply penalty for missing required sections (15% per missing section)
+        missing_sections = getattr(self, '_missing_sections', [])
+        if missing_sections:
+            # Store missing sections info for review reasons
+            if not hasattr(confidence, 'missing_sections'):
+                confidence.missing_sections = missing_sections
+
+            # Apply 15% penalty per missing section to overall score adjustment
+            missing_section_penalty = len(missing_sections) * 0.15
+            self.log_warning(
+                f"Applying {missing_section_penalty * 100:.0f}% confidence penalty "
+                f"for {len(missing_sections)} missing required section(s)"
+            )
+
+            # Add to review reasons
+            for section in missing_sections:
+                confidence.review_reasons.append(
+                    f"Missing required section: {section}"
+                )
+
+            # Flag for human review if any required sections are missing
+            confidence.requires_human_review = True
+
+            # Apply penalty after calculating base score
+            confidence.missing_section_penalty = missing_section_penalty
+
         # Calculate overall score
         confidence.calculate_overall_score()
+
+        # Apply missing section penalty after base calculation
+        if missing_sections and hasattr(confidence, 'missing_section_penalty'):
+            original_score = confidence.overall_score
+            confidence.overall_score = max(0, confidence.overall_score - confidence.missing_section_penalty)
+            self.log_info(
+                f"Confidence score adjusted from {original_score:.2f} to {confidence.overall_score:.2f} "
+                f"due to missing sections"
+            )
+
+        # Log detailed confidence breakdown for debugging
+        self.log_info(
+            f"Confidence calculation complete: overall={confidence.overall_score:.4f} "
+            f"({confidence.overall_score * 100:.2f}%), "
+            f"sections={len(confidence.section_scores)}, "
+            f"total_critiques={confidence.total_critiques}, "
+            f"resolved={confidence.resolved_critiques}, "
+            f"unresolved_critical={confidence.unresolved_critical}, "
+            f"missing_sections={len(missing_sections)}"
+        )
+        for section in confidence.section_scores:
+            self.log_debug(
+                f"  Section '{section.section_name}': base={section.base_score:.2f}, "
+                f"adjusted={section.adjusted_score:.2f}, "
+                f"critiques={section.critique_count}, unresolved={section.unresolved_critiques}"
+            )
 
         return confidence
 
@@ -1074,19 +1621,30 @@ class ArbiterAgent(OrchestratorAgent):
         # Get conversation history summary
         history_summary = self._history.get_summary()
 
-        # Organize critiques by section
+        # Organize critiques by section and compute severity counts
         critiques_by_section: Dict[str, List[Dict]] = {}
+        severity_counts: Dict[str, int] = {"critical": 0, "major": 0, "minor": 0}
         for critique in self._all_critiques:
             section = critique.get("target_section", "General")
             if section not in critiques_by_section:
                 critiques_by_section[section] = []
             critiques_by_section[section].append(critique)
 
-        # Build response map
+            # Count by severity
+            severity = critique.get("severity", "minor").lower()
+            if severity in severity_counts:
+                severity_counts[severity] += 1
+
+        # Build response map and compute disposition counts
         response_map = {
             r.get("critique_id"): r
             for r in self._all_responses
         }
+        disposition_counts: Dict[str, int] = {"Accept": 0, "Rebut": 0, "Acknowledge": 0, "Partial Accept": 0}
+        for response in self._all_responses:
+            disposition = response.get("disposition", "Acknowledge")
+            if disposition in disposition_counts:
+                disposition_counts[disposition] += 1
 
         # Create detailed exchange records
         exchanges = []
@@ -1138,14 +1696,14 @@ class ArbiterAgent(OrchestratorAgent):
             },
 
             # Critique breakdown
-            "critiques_by_severity": debate_summary.get("critiques_by_severity", {}),
+            "critiques_by_severity": severity_counts,
             "critiques_by_section": {
                 section: len(crits)
                 for section, crits in critiques_by_section.items()
             },
 
             # Response breakdown
-            "responses_by_disposition": debate_summary.get("responses_by_disposition", {}),
+            "responses_by_disposition": disposition_counts,
 
             # Detailed exchanges
             "exchanges": exchanges,
@@ -1158,6 +1716,213 @@ class ArbiterAgent(OrchestratorAgent):
             # Round-by-round summaries
             "round_summaries": debate_summary.get("round_summaries", []),
         }
+
+    def _build_debate_log(self) -> List[Dict[str, Any]]:
+        """
+        Build comprehensive debate log from all workflow phases.
+
+        Includes:
+        - Blue-build entries (initial drafts from blue team agents)
+        - Red-attack entries (critiques)
+        - Blue-defense entries (responses)
+        - Orchestrator entries (round markers, consensus decisions)
+        - Synthesis entries (final document synthesis)
+
+        Returns:
+            List of DebateEntry dicts for frontend display.
+        """
+        entries = []
+
+        # 1. Add round start markers from round summaries
+        round_summaries = self._round_manager.get_all_summaries()
+        for summary in round_summaries:
+            phase = self._round_type_to_phase(summary.round_type)
+            entries.append({
+                "id": f"round-start-{summary.round_number}-{summary.round_type.value}",
+                "round": summary.round_number,
+                "phase": phase,
+                "agentId": "Arbiter",
+                "type": "round-marker",
+                "content": f"Starting {summary.round_type.value.replace('_', ' ').title()} phase (Round {summary.round_number})",
+                "timestamp": summary.started_at.isoformat(),
+                "category": "orchestrator",
+                "metadata": {
+                    "round_type": summary.round_type.value,
+                    "blue_team_agents": summary.blue_team_agents,
+                    "red_team_agents": summary.red_team_agents,
+                }
+            })
+
+        # 2. Add blue-build phase entries from blue_team_contributions
+        for contrib in self._blue_team_contributions:
+            round_type = contrib.get("round_type", "")
+            if round_type in ("BlueBuild", "BLUE_BUILD", "blue_build", "blue-build"):
+                agent_role = contrib.get("agent_role", "unknown")
+                created_at = contrib.get("created_at", datetime.now(timezone.utc).isoformat())
+                entries.append({
+                    "id": f"draft-{agent_role.lower().replace(' ', '-')}-{contrib.get('round_number', 1)}-{created_at}",
+                    "round": contrib.get("round_number", 1),
+                    "phase": "blue-build",
+                    "agentId": contrib.get("agent_name", contrib.get("agent_role", "Unknown")),
+                    "type": "draft",
+                    "content": self._format_contribution_content(contrib),
+                    "timestamp": created_at,
+                    "category": "blue",
+                    "metadata": {
+                        "content_type": contrib.get("content_type"),
+                        "sections": list(contrib.get("sections", {}).keys()),
+                    }
+                })
+
+        # 3. Add critiques (red-attack phase)
+        for critique in self._all_critiques:
+            entries.append({
+                "id": f"critique-{critique.get('id', '')}",
+                "round": critique.get("round_number", 1),
+                "phase": "red-attack",
+                "agentId": critique.get("agent", "Unknown"),
+                "type": "critique",
+                "content": f"[{critique.get('severity', 'minor').upper()}] {critique.get('title', '')}: {critique.get('argument', '')}",
+                "timestamp": critique.get("created_at", datetime.now(timezone.utc).isoformat()),
+                "severity": critique.get("severity", "minor"),
+                "status": critique.get("status", "pending"),
+                "category": "red",
+                "metadata": {
+                    "target_section": critique.get("target_section"),
+                    "suggested_remedy": critique.get("suggested_remedy"),
+                }
+            })
+
+        # 4. Add responses (blue-defense phase)
+        for response in self._all_responses:
+            entries.append({
+                "id": f"response-{response.get('id', '')}",
+                "round": response.get("round_number", 1),
+                "phase": "blue-defense",
+                "agentId": response.get("agent", "Unknown"),
+                "type": "response",
+                "content": f"[{response.get('disposition', 'Acknowledge')}] {response.get('summary', '')}",
+                "timestamp": response.get("created_at", datetime.now(timezone.utc).isoformat()),
+                "status": self._disposition_to_status(response.get("disposition", "")),
+                "category": "blue",
+                "metadata": {
+                    "critique_id": response.get("critique_id"),
+                    "action": response.get("action"),
+                }
+            })
+
+        # 5. Add blue-defense phase contributions (supplemental analysis during defense)
+        for contrib in self._blue_team_contributions:
+            round_type = contrib.get("round_type", "")
+            if round_type in ("BlueDefense", "BLUE_DEFENSE", "blue_defense", "blue-defense"):
+                agent_role = contrib.get("agent_role", "unknown")
+                created_at = contrib.get("created_at", datetime.now(timezone.utc).isoformat())
+                entries.append({
+                    "id": f"defense-contrib-{agent_role.lower().replace(' ', '-')}-{contrib.get('round_number', 1)}-{created_at}",
+                    "round": contrib.get("round_number", 1),
+                    "phase": "blue-defense",
+                    "agentId": contrib.get("agent_name", contrib.get("agent_role", "Unknown")),
+                    "type": "draft",
+                    "content": self._format_contribution_content(contrib),
+                    "timestamp": created_at,
+                    "category": "blue",
+                    "metadata": {
+                        "content_type": contrib.get("content_type"),
+                        "sections": list(contrib.get("sections", {}).keys()),
+                    }
+                })
+
+        # 6. Add orchestrator round-end entries with consensus/resolution info
+        for summary in round_summaries:
+            if summary.round_type in (RoundType.BLUE_DEFENSE, RoundType.SYNTHESIS):
+                if summary.consensus_reached:
+                    consensus_msg = f"Consensus reached (confidence: {summary.consensus_confidence:.0%})"
+                else:
+                    consensus_msg = f"Round complete - Resolution rate: {summary.resolution_rate:.0f}%"
+
+                entries.append({
+                    "id": f"round-end-{summary.round_number}-{summary.round_type.value}",
+                    "round": summary.round_number,
+                    "phase": self._round_type_to_phase(summary.round_type),
+                    "agentId": "Arbiter",
+                    "type": "orchestrator",
+                    "content": consensus_msg,
+                    "timestamp": summary.ended_at.isoformat(),
+                    "category": "orchestrator",
+                    "metadata": {
+                        "critique_count": summary.critique_count,
+                        "response_count": summary.response_count,
+                        "resolution_rate": summary.resolution_rate,
+                        "consensus_reached": summary.consensus_reached,
+                        "consensus_confidence": summary.consensus_confidence,
+                        "has_blocking_issues": summary.has_blocking_issues,
+                        "critical_unresolved": summary.critical_unresolved,
+                    }
+                })
+
+        # 7. Add synthesis entry
+        synthesis_summary = next(
+            (s for s in round_summaries if s.round_type == RoundType.SYNTHESIS),
+            None
+        )
+        if synthesis_summary:
+            entries.append({
+                "id": "synthesis-complete",
+                "round": synthesis_summary.round_number,
+                "phase": "synthesis",
+                "agentId": "Arbiter",
+                "type": "synthesis",
+                "content": f"Document synthesis complete. Final document includes {len(self._current_draft)} sections.",
+                "timestamp": synthesis_summary.ended_at.isoformat(),
+                "category": "orchestrator",
+                "metadata": {
+                    "sections": list(self._current_draft.keys()),
+                    "total_critiques": len(self._all_critiques),
+                    "total_responses": len(self._all_responses),
+                }
+            })
+
+        # Sort by timestamp
+        entries.sort(key=lambda e: e.get("timestamp", ""))
+        return entries
+
+    def _round_type_to_phase(self, round_type: RoundType) -> str:
+        """Convert RoundType enum to Phase string for frontend."""
+        mapping = {
+            RoundType.BLUE_BUILD: "blue-build",
+            RoundType.RED_ATTACK: "red-attack",
+            RoundType.BLUE_DEFENSE: "blue-defense",
+            RoundType.SYNTHESIS: "synthesis",
+        }
+        return mapping.get(round_type, "blue-build")
+
+    def _disposition_to_status(self, disposition: str) -> str:
+        """Convert response disposition to status."""
+        disposition_map = {
+            "Accept": "accepted",
+            "Partial Accept": "accepted",
+            "Rebut": "rebutted",
+            "Acknowledge": "acknowledged",
+            "accept": "accepted",
+            "partial accept": "accepted",
+            "rebut": "rebutted",
+            "acknowledge": "acknowledged",
+        }
+        return disposition_map.get(disposition, "pending")
+
+    def _format_contribution_content(self, contrib: Dict[str, Any]) -> str:
+        """Format contribution for display in debate log."""
+        content = contrib.get("content", "")
+        sections = contrib.get("sections", {})
+
+        if sections:
+            section_names = list(sections.keys())
+            return f"Generated {len(section_names)} section(s): {', '.join(section_names[:3])}{'...' if len(section_names) > 3 else ''}"
+        elif content:
+            preview = content[:200] + "..." if len(content) > 200 else content
+            return preview
+        else:
+            return f"Analysis contribution from {contrib.get('agent_name', 'agent')}"
 
     def _get_blue_team_agents(self) -> List:
         """Get blue team agents for the current workflow."""

@@ -444,6 +444,8 @@ async function getDocument(documentId: string): Promise<FinalOutput | null> {
         timestamp: string;
       }>;
       summary: string;
+      critiquesBySeverity?: Record<string, number>;
+      responsesByDisposition?: Record<string, number>;
     };
     debateLog: Array<{
       id: string;
@@ -456,6 +458,20 @@ async function getDocument(documentId: string): Promise<FinalOutput | null> {
     }>;
     metrics?: GenerationMetrics;
     requiresHumanReview: boolean;
+    agentInsights?: {
+      marketIntelligence: Record<string, unknown>;
+      captureStrategy: Record<string, unknown>;
+      complianceStatus: Record<string, unknown>;
+      summary: {
+        agentsContributed: Array<{
+          role: string;
+          name: string;
+          has_content: boolean;
+          has_sections: boolean;
+        }>;
+        keyFindings: string[];
+      };
+    };
   }>(response);
 
   // Transform backend response to frontend format
@@ -474,13 +490,17 @@ async function getDocument(documentId: string): Promise<FinalOutput | null> {
     },
     confidence: data.confidence || { overall: 0, sections: {} },
     redTeamReport: data.redTeamReport ? {
-      entries: data.redTeamReport.entries.map((e) => ({
+      entries: data.redTeamReport.entries.map((e: Record<string, unknown>) => ({
         ...e,
         phase: e.phase as Phase,
         type: e.type as 'critique' | 'response' | 'synthesis',
-        timestamp: new Date(e.timestamp),
+        timestamp: new Date(e.timestamp as string),
+        severity: (e.severity as string) || undefined,
+        status: (e.status as string) || undefined,
       })),
       summary: data.redTeamReport.summary,
+      critiquesBySeverity: data.redTeamReport.critiquesBySeverity || {},
+      responsesByDisposition: data.redTeamReport.responsesByDisposition || {},
     } : { entries: [], summary: '' },
     debateLog: data.debateLog.map((e) => ({
       ...e,
@@ -500,6 +520,7 @@ async function getDocument(documentId: string): Promise<FinalOutput | null> {
       timeElapsedMs: 0,
     },
     requiresHumanReview: data.requiresHumanReview,
+    agentInsights: data.agentInsights,
   };
 }
 

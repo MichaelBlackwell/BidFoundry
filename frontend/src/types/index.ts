@@ -421,14 +421,20 @@ export interface DebateEntry {
   round: number;
   phase: Phase;
   agentId: string;
-  type: 'critique' | 'response' | 'synthesis';
+  type: 'critique' | 'response' | 'synthesis' | 'draft' | 'orchestrator' | 'round-marker';
   content: string;
   timestamp: Date;
+  severity?: Severity;  // For critique entries
+  status?: 'pending' | 'accepted' | 'rebutted' | 'acknowledged';  // For critique entries
+  category?: 'blue' | 'red' | 'orchestrator';  // For color coding - orchestrator = yellow
+  metadata?: Record<string, unknown>;  // For additional data like consensus info
 }
 
 export interface RedTeamReport {
   entries: DebateEntry[];
   summary: string;
+  critiquesBySeverity?: Record<string, number>;
+  responsesByDisposition?: Record<string, number>;
 }
 
 export interface EscalationInfo {
@@ -444,6 +450,23 @@ export interface Dispute {
   arbiterNote?: string;
 }
 
+export interface AgentInsightsSummary {
+  agentsContributed: Array<{
+    role: string;
+    name: string;
+    has_content: boolean;
+    has_sections: boolean;
+  }>;
+  keyFindings: string[];
+}
+
+export interface AgentInsights {
+  marketIntelligence: Record<string, unknown>;
+  captureStrategy: Record<string, unknown>;
+  complianceStatus: Record<string, unknown>;
+  summary: AgentInsightsSummary;
+}
+
 export interface FinalOutput {
   documentId: string;
   content: DocumentDraft;
@@ -453,6 +476,7 @@ export interface FinalOutput {
   metrics: GenerationMetrics;
   requiresHumanReview: boolean;
   escalation?: EscalationInfo;
+  agentInsights?: AgentInsights;
 }
 
 // User
@@ -475,7 +499,7 @@ export interface GeneratedDocument {
 }
 
 // UI State
-export type OutputTab = 'document' | 'redteam' | 'debate' | 'metrics';
+export type OutputTab = 'document' | 'redteam' | 'debate' | 'metrics' | 'insights';
 
 export interface UIState {
   sidebarCollapsed: boolean;

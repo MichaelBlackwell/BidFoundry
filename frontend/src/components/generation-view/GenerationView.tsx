@@ -71,6 +71,7 @@ export const GenerationView = memo(function GenerationView({
     error,
     connectionStatus,
     revisingSectionIds,
+    agentInsights,
     // Actions
     pause,
     resume,
@@ -336,6 +337,7 @@ export const GenerationView = memo(function GenerationView({
               onExport={handleExport}
               isExpanded={previewExpanded}
               onToggleExpand={handleTogglePreview}
+              agentInsights={agentInsights}
             />
           </div>
         )}
@@ -369,6 +371,7 @@ export const GenerationView = memo(function GenerationView({
             onExport={handleExport}
             isExpanded={previewExpanded}
             onToggleExpand={handleTogglePreview}
+            agentInsights={agentInsights}
           />
         </div>
       )}

@@ -7,6 +7,8 @@ from fastapi.responses import Response
 
 from server.dependencies import DbSession
 from server.models.schemas import (
+    AgentInsightsSchema,
+    AgentInsightsSummarySchema,
     ConfidenceReportSchema,
     DocumentContentSchema,
     DocumentDuplicateRequest,
@@ -45,7 +47,7 @@ def _build_document_response(document) -> DocumentResponse:
 
             # Get confidence from metadata if available
             metadata = section.get("metadata", {})
-            confidence = metadata.get("confidence_score", 0.0) * 100  # Convert to percentage
+            confidence = round(metadata.get("confidence_score", 0.0) * 100, 2)  # Convert to percentage
             unresolved = metadata.get("total_critiques", 0) - metadata.get("resolved_critiques", 0)
 
             transformed_sections.append({
@@ -66,9 +68,37 @@ def _build_document_response(document) -> DocumentResponse:
     # Parse confidence report if available
     confidence = None
     if document.confidence_report:
+        # Get overall score - handle both 0-1 and 0-100 formats
+        overall_value = document.confidence_report.get("overall")
+        if overall_value is None:
+            # Fall back to overall_score (0-1 format) and convert to percentage
+            overall_score = document.confidence_report.get("overall_score", document.confidence)
+            overall_value = round(overall_score * 100, 2)
+        elif overall_value <= 1.0:
+            # Value is in 0-1 format, convert to percentage
+            overall_value = round(overall_value * 100, 2)
+        else:
+            # Value is already in 0-100 format, just round for consistency
+            overall_value = round(overall_value, 2)
+
+        # Get section scores - try "sections" first, then "section_scores" (0-1 format)
+        sections_value = document.confidence_report.get("sections", {})
+        if not sections_value and "section_scores" in document.confidence_report:
+            # Convert section_scores from 0-1 to 0-100
+            sections_value = {
+                s.get("section_name", s.get("section_id", f"section-{i}")): round(s.get("adjusted_score", 0) * 100, 2)
+                for i, s in enumerate(document.confidence_report.get("section_scores", []))
+            }
+        elif sections_value:
+            # Check if sections are in 0-1 format and convert if needed
+            sections_value = {
+                name: round(score * 100, 2) if score <= 1.0 else round(score, 2)
+                for name, score in sections_value.items()
+            }
+
         confidence = ConfidenceReportSchema(
-            overall=document.confidence_report.get("overall", document.confidence),
-            sections=document.confidence_report.get("sections", {}),
+            overall=overall_value,
+            sections=sections_value,
         )
 
     # Parse red team report if available
@@ -89,15 +119,67 @@ def _build_document_response(document) -> DocumentResponse:
         else:
             summary_text = raw_summary
 
+        # Build entries from exchanges (critique/response pairs)
+        exchanges = document.red_team_report.get("exchanges", [])
+        entries = []
+        for exchange in exchanges:
+            critique = exchange.get("critique", {})
+            response = exchange.get("response")
+            if critique:
+                entries.append({
+                    "id": critique.get("id", ""),
+                    "round": critique.get("round_number", 1),
+                    "phase": "red-attack",
+                    "agentId": critique.get("agent", "Unknown"),
+                    "type": "critique",
+                    "severity": critique.get("severity", "minor"),
+                    "status": "accepted" if response and response.get("disposition") in ("Accept", "Partial Accept")
+                             else "rebutted" if response and response.get("disposition") == "Rebut"
+                             else "acknowledged" if response and response.get("disposition") == "Acknowledge"
+                             else "pending",
+                    "content": f"[{critique.get('severity', 'minor').upper()}] {critique.get('title', '')}: {critique.get('argument', '')}",
+                    "timestamp": document.red_team_report.get("generated_at", document.updated_at.isoformat() if document.updated_at else ""),
+                })
+                if response:
+                    entries.append({
+                        "id": response.get("id", ""),
+                        "round": 1,
+                        "phase": "blue-defense",
+                        "agentId": response.get("agent", "Unknown"),
+                        "type": "response",
+                        "content": f"[{response.get('disposition', 'Acknowledge')}] {response.get('summary', '')}",
+                        "timestamp": document.red_team_report.get("generated_at", document.updated_at.isoformat() if document.updated_at else ""),
+                    })
+
         red_team_report = RedTeamReportSchema(
-            entries=document.red_team_report.get("entries", []),
+            entries=entries,
             summary=summary_text,
+            critiques_by_severity=document.red_team_report.get("critiques_by_severity", {}),
+            responses_by_disposition=document.red_team_report.get("responses_by_disposition", {}),
         )
 
     # Parse metrics if available
     metrics = None
     if document.metrics:
         metrics = GenerationMetricsSchema(**document.metrics)
+
+    # Parse agent insights if available (stored in document.content by synthesizer)
+    agent_insights = None
+    if document.content and "agent_insights" in document.content:
+        raw_insights = document.content["agent_insights"]
+        if raw_insights:
+            # Build the summary schema
+            raw_summary = raw_insights.get("summary", {})
+            summary = AgentInsightsSummarySchema(
+                agentsContributed=raw_summary.get("agents_contributed", []),
+                keyFindings=raw_summary.get("key_findings", []),
+            )
+            agent_insights = AgentInsightsSchema(
+                marketIntelligence=raw_insights.get("market_intelligence", {}),
+                captureStrategy=raw_insights.get("capture_strategy", {}),
+                complianceStatus=raw_insights.get("compliance_status", {}),
+                summary=summary,
+            )
 
     return DocumentResponse(
         documentId=document.id,
@@ -107,6 +189,7 @@ def _build_document_response(document) -> DocumentResponse:
         debateLog=document.debate_log or [],
         metrics=metrics,
         requiresHumanReview=document.requires_human_review,
+        agentInsights=agent_insights,
     )
 
 

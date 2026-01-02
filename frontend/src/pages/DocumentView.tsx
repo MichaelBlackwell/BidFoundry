@@ -1,9 +1,9 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { MainWorkspace } from '../components/layout';
 import { FinalOutputView } from '../components/final-output/FinalOutputView';
 import { documentsApi } from '../api/documents';
-import type { FinalOutput, DocumentType } from '../types';
+import type { FinalOutput, DocumentType, Critique, Response } from '../types';
 import './DocumentView.css';
 
 export function DocumentViewPage() {
@@ -98,6 +98,44 @@ export function DocumentViewPage() {
     navigate('/history');
   }, [navigate]);
 
+  // Extract critiques and responses from red team report entries
+  // This must be called before any early returns to satisfy React's Rules of Hooks
+  const { critiques, responses } = useMemo(() => {
+    const extractedCritiques: Critique[] = [];
+    const extractedResponses: Response[] = [];
+
+    if (docData?.redTeamReport?.entries) {
+      docData.redTeamReport.entries.forEach((entry) => {
+        if (entry.type === 'critique') {
+          extractedCritiques.push({
+            id: entry.id,
+            agentId: entry.agentId,
+            target: '',  // Not stored in entries
+            severity: entry.severity || 'minor',
+            content: entry.content,
+            timestamp: entry.timestamp,
+            round: entry.round,
+            phase: entry.phase,
+            status: entry.status || 'pending',
+          });
+        } else if (entry.type === 'response') {
+          extractedResponses.push({
+            id: entry.id,
+            agentId: entry.agentId,
+            critiqueId: '',  // Not directly linked in entries
+            content: entry.content,
+            accepted: true,
+            timestamp: entry.timestamp,
+            round: entry.round,
+            phase: entry.phase,
+          });
+        }
+      });
+    }
+
+    return { critiques: extractedCritiques, responses: extractedResponses };
+  }, [docData]);
+
   if (loading) {
     return (
       <MainWorkspace title="Loading...">
@@ -155,12 +193,13 @@ export function DocumentViewPage() {
           result={docData}
           documentType={documentMeta.type}
           title={documentMeta.title}
-          critiques={[]}
-          responses={[]}
+          critiques={critiques}
+          responses={responses}
           agents={{}}
           onExport={handleExport}
           initialTab="document"
           className="document-view-page__content"
+          hideInsights
         />
       </div>
     </MainWorkspace>

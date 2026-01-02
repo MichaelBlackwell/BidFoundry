@@ -248,10 +248,6 @@ class MessageBus:
             # Wait for delivery to complete
             await self._wait_for_delivery(message)
 
-        self._logger.debug(
-            f"Published message {message.id} ({message.message_type.value}) "
-            f"from {message.sender_role}"
-        )
         return message
 
     async def _wait_for_delivery(self, message: Message) -> None:

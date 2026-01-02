@@ -47,6 +47,7 @@ from server.models.schemas import DocumentGenerationRequest, SwarmConfigSchema
 from server.websocket.events import (
     AgentCompletePayload,
     AgentInfo,
+    AgentInsightsUpdatePayload,
     AgentRegisteredPayload,
     AgentStreamingPayload,
     AgentThinkingPayload,
@@ -413,7 +414,7 @@ class OrchestratorService:
                     context.request_id,
                     ServerEventType.GENERATION_COMPLETE,
                     GenerationCompletePayload(
-                        result=self._format_final_output(result)
+                        result=self._format_final_output(result, context.document_id)
                     ).model_dump(by_alias=True),
                 )
 
@@ -598,17 +599,31 @@ class OrchestratorService:
             elif message.message_type == MessageType.CRITIQUE:
                 data = message.get_structured_data()
                 target_section = data.get("target_section")
+                agent_id = message.sender_role.lower().replace(" ", "_")
+
+                # DEBUG: Log critique received
+                logger.info(
+                    f"Orchestrator: Critique received from {agent_id} - "
+                    f"severity={data.get('severity', 'unknown')}, "
+                    f"target={target_section}, "
+                    f"round={message.round_number}"
+                )
 
                 await self._broadcast_event(
                     request_id,
                     ServerEventType.AGENT_COMPLETE,
                     AgentCompletePayload(
-                        agent_id=message.sender_role.lower().replace(" ", "_"),
+                        agent_id=agent_id,
                         critique={
+                            "id": data.get("id", message.id),
                             "severity": data.get("severity", "minor"),
                             "targetSection": target_section,
                             "content": data.get("argument", ""),
                             "suggestions": [data.get("suggested_remedy")] if data.get("suggested_remedy") else [],
+                            "round": message.round_number,
+                            "phase": "red-attack",
+                            "status": data.get("status", "pending"),
+                            "agentId": agent_id,
                         },
                     ).model_dump(by_alias=True),
                 )
@@ -736,6 +751,66 @@ class OrchestratorService:
                         ConfidenceUpdatePayload(
                             overall=data.get("overall", 0),
                             sections=data.get("sections", {}),
+                        ).model_dump(by_alias=True),
+                    )
+                elif status_type == "document_updated":
+                    # Handle full document state updates from Arbiter
+                    # Updates section content in the frontend preview
+                    sections_data = data.get("sections", [])
+                    for sec in sections_data:
+                        section_name = sec.get("name", "unknown")
+                        content = sec.get("content", "")
+                        section_id = f"sec-{section_name.lower().replace(' ', '-').replace('_', '-')}"
+
+                        # Preserve existing confidence and critique counts, or use defaults
+                        existing = context.current_sections.get(section_name, {})
+                        context.current_sections[section_name] = {
+                            "id": section_id,
+                            "title": section_name,
+                            "content": content,
+                            "confidence": existing.get("confidence", 75),
+                            "unresolvedCritiques": existing.get("unresolvedCritiques", 0),
+                        }
+
+                    # Emit draft:update with all sections
+                    if context.current_sections:
+                        context.draft_version += 1
+                        sections_list = [
+                            {
+                                "id": sec_data["id"],
+                                "title": sec_data["title"],
+                                "content": sec_data["content"],
+                                "confidence": sec_data["confidence"],
+                                "unresolvedCritiques": sec_data["unresolvedCritiques"],
+                            }
+                            for sec_data in context.current_sections.values()
+                        ]
+                        full_draft = {
+                            "id": f"draft-{context.document_id}",
+                            "sections": sections_list,
+                            "overallConfidence": min(s["confidence"] for s in sections_list) if sections_list else 0,
+                            "updatedAt": datetime.now(timezone.utc).isoformat(),
+                            "version": context.draft_version,
+                        }
+                        await self._broadcast_event(
+                            request_id,
+                            ServerEventType.DRAFT_UPDATE,
+                            DraftUpdatePayload(
+                                draft=full_draft,
+                                changed_sections=[sec.get("name", "") for sec in sections_data],
+                            ).model_dump(by_alias=True),
+                        )
+                elif status_type == "agent_contribution":
+                    # Handle agent contribution events (for Agent Insights panel)
+                    # This forwards analysis data from blue team agents to the frontend
+                    await self._broadcast_event(
+                        request_id,
+                        ServerEventType.AGENT_INSIGHTS_UPDATE,
+                        AgentInsightsUpdatePayload(
+                            agent_role=data.get("agent_role", ""),
+                            agent_name=data.get("agent_name", ""),
+                            content=data.get("content"),
+                            metadata=data.get("metadata", {}),
                         ).model_dump(by_alias=True),
                     )
 
@@ -963,18 +1038,38 @@ class OrchestratorService:
                 document.confidence = result.confidence.overall_score if result.confidence else 0
                 document.confidence_report = result.confidence.to_dict() if result.confidence else None
                 document.red_team_report = result.red_team_report
+                document.debate_log = result.debate_log if hasattr(result, 'debate_log') else []
                 document.requires_human_review = result.requires_human_review
+                # Calculate severity counts from red_team_report
+                critiques_by_severity = result.red_team_report.get("critiques_by_severity", {}) if result.red_team_report else {}
+                responses_by_disposition = result.red_team_report.get("responses_by_disposition", {}) if result.red_team_report else {}
+
                 document.metrics = {
                     "rounds_completed": result.total_rounds,
                     "total_critiques": result.total_critiques,
-                    "resolved_critiques": result.resolved_critiques,
-                    "consensus_reached": result.consensus_reached,
-                    "duration_seconds": result.duration_seconds,
+                    "critical_count": critiques_by_severity.get("critical", 0),
+                    "major_count": critiques_by_severity.get("major", 0),
+                    "minor_count": critiques_by_severity.get("minor", 0),
+                    "accepted_count": responses_by_disposition.get("Accept", 0) + responses_by_disposition.get("Partial Accept", 0),
+                    "rebutted_count": responses_by_disposition.get("Rebut", 0),
+                    "acknowledged_count": responses_by_disposition.get("Acknowledge", 0),
+                    "time_elapsed_ms": int(result.duration_seconds * 1000),
                 }
                 # Update timestamp to indicate generation completed
                 document.updated_at = datetime.now(timezone.utc)
                 await db.commit()
-                logger.info(f"Saved generation result for document {context.document_id}")
+
+                # DEBUG: Log final metrics being saved
+                logger.info(
+                    f"Orchestrator: Saved generation result for document {context.document_id} - "
+                    f"rounds={result.total_rounds}, critiques={result.total_critiques}, "
+                    f"resolved={result.resolved_critiques}, consensus={result.consensus_reached}"
+                )
+                if result.total_critiques == 0:
+                    logger.warning(
+                        f"Orchestrator: Document {context.document_id} completed with 0 critiques! "
+                        f"Check server logs for RedAttack warnings to diagnose the issue."
+                    )
         except Exception as e:
             logger.error(f"Failed to save generation result: {e}")
 
@@ -1002,12 +1097,12 @@ class OrchestratorService:
 
         asyncio.create_task(remove_after_delay())
 
-    def _format_final_output(self, result: Any) -> dict:
+    def _format_final_output(self, result: Any, document_id: str) -> dict:
         """Format FinalOutput for WebSocket transmission."""
         return {
-            "documentId": result.request_id,
+            "documentId": document_id,
             "content": {
-                "id": result.request_id,
+                "id": document_id,
                 "sections": [
                     {
                         "id": f"sec-{i}",
@@ -1018,26 +1113,30 @@ class OrchestratorService:
                     }
                     for i, (name, content) in enumerate(result.sections.items())
                 ],
-                "overallConfidence": result.confidence.overall_score if result.confidence else 0,
+                "overallConfidence": round(result.confidence.overall_score * 100, 2) if result.confidence else 0,
                 "updatedAt": datetime.now(timezone.utc).isoformat(),
             },
             "confidence": {
-                "overall": result.confidence.overall_score if result.confidence else 0,
+                "overall": round(result.confidence.overall_score * 100, 2) if result.confidence else 0,
                 "sections": {
-                    s.section_name: s.adjusted_score
+                    s.section_name: round(s.adjusted_score * 100, 2)
                     for s in (result.confidence.section_scores if result.confidence else [])
                 },
             },
-            "redTeamReport": result.red_team_report,
+            "redTeamReport": result.red_team_report or {},
+            "debateLog": result.debate_log if hasattr(result, 'debate_log') else [],
             "metrics": {
                 "roundsCompleted": result.total_rounds,
                 "totalCritiques": result.total_critiques,
-                "criticalCount": 0,
-                "majorCount": 0,
-                "minorCount": result.total_critiques,
-                "acceptedCount": result.resolved_critiques,
-                "rebuttedCount": 0,
-                "acknowledgedCount": 0,
+                "criticalCount": (result.red_team_report or {}).get("critiques_by_severity", {}).get("critical", 0),
+                "majorCount": (result.red_team_report or {}).get("critiques_by_severity", {}).get("major", 0),
+                "minorCount": (result.red_team_report or {}).get("critiques_by_severity", {}).get("minor", 0),
+                "acceptedCount": len([e for e in (result.red_team_report or {}).get("exchanges", [])
+                                     if e and (e.get("response") or {}).get("disposition") in ("Accept", "Partial Accept")]),
+                "rebuttedCount": len([e for e in (result.red_team_report or {}).get("exchanges", [])
+                                     if e and (e.get("response") or {}).get("disposition") == "Rebut"]),
+                "acknowledgedCount": len([e for e in (result.red_team_report or {}).get("exchanges", [])
+                                         if e and (e.get("response") or {}).get("disposition") == "Acknowledge"]),
                 "timeElapsedMs": int(result.duration_seconds * 1000),
             },
             "requiresHumanReview": result.requires_human_review,

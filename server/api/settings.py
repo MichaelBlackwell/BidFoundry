@@ -8,6 +8,14 @@ from pydantic import BaseModel
 
 from server.config import settings, ANTHROPIC_MODELS, GROQ_MODELS
 
+# Import configure_llm_settings to update agent system when settings change
+try:
+    from agents.config import configure_llm_settings
+    AGENTS_AVAILABLE = True
+except ImportError:
+    configure_llm_settings = None
+    AGENTS_AVAILABLE = False
+
 
 router = APIRouter()
 
@@ -112,6 +120,15 @@ async def update_llm_settings(data: LLMSettingsUpdate) -> LLMSettingsResponse:
     # Update environment variables (session-level)
     os.environ["LLM_PROVIDER"] = data.provider
     os.environ["LLM_MODEL"] = data.model
+
+    # Update agent system's LLM settings cache so agents use the new provider/model
+    if AGENTS_AVAILABLE and configure_llm_settings:
+        api_key_env_var = "ANTHROPIC_API_KEY" if data.provider == "anthropic" else "GROQ_API_KEY"
+        configure_llm_settings(
+            provider=data.provider,
+            model=data.model,
+            api_key_env_var=api_key_env_var,
+        )
 
     # Return updated settings
     return await get_llm_settings()

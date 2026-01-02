@@ -9,7 +9,7 @@
 
 import { useCallback, useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { useSwarmStore, selectLatestDraft, selectCritiqueSummary } from '../stores/swarmStore';
+import { useSwarmStore, selectCritiqueSummary, selectAgentInsights, type AgentInsights } from '../stores/swarmStore';
 import { useUIStore } from '../stores/uiStore';
 import { useSwarmWebSocket } from './useSwarmWebSocket';
 import type { ExportFormat } from '../components/document-preview/PreviewControls';
@@ -79,6 +79,8 @@ export interface UseGenerationViewReturn {
   previousDraft: DocumentDraft | null;
   /** IDs of sections currently being revised */
   revisingSectionIds: string[];
+  /** Agent insights from blue team agents */
+  agentInsights: AgentInsights;
 
   // Connection State
   /** WebSocket connection status */
@@ -117,6 +119,7 @@ export function useGenerationView(
   const drafts = useSwarmStore((s) => s.drafts);
   const storeError = useSwarmStore((s) => s.error);
   const critiqueSummary = useSwarmStore(useShallow(selectCritiqueSummary));
+  const agentInsights = useSwarmStore(selectAgentInsights);
   const storeReset = useSwarmStore((s) => s.reset);
 
   // ============================================================================
@@ -261,6 +264,7 @@ export function useGenerationView(
     draft,
     previousDraft,
     revisingSectionIds,
+    agentInsights,
 
     // Connection State
     connectionStatus,

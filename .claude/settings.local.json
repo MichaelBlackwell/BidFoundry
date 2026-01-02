@@ -25,7 +25,11 @@
       "Bash(wc -l agents/blue/*.py agents/red/*.py agents/orchestrator/*.py)",
       "Bash(find:*)",
       "Bash(tree:*)",
-      "Bash(timeout 120 python -m pytest:*)"
+      "Bash(timeout 120 python -m pytest:*)",
+      "Bash(timeout 60 python -m pytest:*)",
+      "Bash(grep:*)",
+      "Bash(\"d:\\\\ShawarmAgen\\\\frontend\\\\node_modules\\\\.bin\\\\tsc.cmd\":*)",
+      "Bash(wc:*)"
     ]
   }
 }

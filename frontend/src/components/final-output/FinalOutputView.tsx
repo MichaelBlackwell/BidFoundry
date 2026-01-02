@@ -17,6 +17,7 @@ import { RedTeamReportView } from './RedTeamReportView';
 import { DebateLogView } from './DebateLogView';
 import { MetricsView } from './MetricsView';
 import { ExportOptions, type ExportFormat } from './ExportOptions';
+import { AgentInsightsPanel } from '../document-preview/AgentInsightsPanel';
 import type {
   OutputTab,
   FinalOutput,
@@ -24,9 +25,26 @@ import type {
   Critique,
   Response,
   AgentRuntimeState,
+  AgentInsights,
 } from '../../types';
 import { DOCUMENT_TYPE_LABELS } from '../../types';
+import type { AgentInsights as StoreAgentInsights } from '../../stores/swarmStore';
 import './FinalOutputView.css';
+
+/**
+ * Convert API AgentInsights format to the store format expected by AgentInsightsPanel
+ */
+function convertToStoreFormat(apiInsights: AgentInsights): StoreAgentInsights {
+  return {
+    marketIntelligence: apiInsights.marketIntelligence as StoreAgentInsights['marketIntelligence'],
+    captureStrategy: apiInsights.captureStrategy as StoreAgentInsights['captureStrategy'],
+    complianceStatus: apiInsights.complianceStatus as StoreAgentInsights['complianceStatus'],
+    summary: {
+      agentsContributed: apiInsights.summary.agentsContributed.map((a) => a.name || a.role),
+      keyFindings: apiInsights.summary.keyFindings,
+    },
+  };
+}
 
 export interface FinalOutputViewProps {
   /** The final output data from generation */
@@ -53,6 +71,8 @@ export interface FinalOutputViewProps {
   initialTab?: OutputTab;
   /** Optional additional CSS class */
   className?: string;
+  /** Hide the Agent Insights tab (e.g., when viewing from history) */
+  hideInsights?: boolean;
 }
 
 export const FinalOutputView = memo(function FinalOutputView({
@@ -68,6 +88,7 @@ export const FinalOutputView = memo(function FinalOutputView({
   onDebateEntryClick,
   initialTab = 'document',
   className = '',
+  hideInsights = false,
 }: FinalOutputViewProps) {
   const [activeTab, setActiveTab] = useState<OutputTab>(initialTab);
   const [isExporting, setIsExporting] = useState(false);
@@ -169,6 +190,15 @@ export const FinalOutputView = memo(function FinalOutputView({
           />
         );
 
+      case 'insights':
+        return result.agentInsights ? (
+          <AgentInsightsPanel insights={convertToStoreFormat(result.agentInsights)} />
+        ) : (
+          <div className="final-output__no-insights">
+            <p>No agent insights available for this document.</p>
+          </div>
+        );
+
       default:
         return null;
     }
@@ -192,7 +222,7 @@ export const FinalOutputView = memo(function FinalOutputView({
       </header>
 
       {/* Tab Navigation */}
-      <TabBar activeTab={activeTab} onTabChange={handleTabChange} />
+      <TabBar activeTab={activeTab} onTabChange={handleTabChange} hideInsights={hideInsights} />
 
       {/* Main Content Area */}
       <div className="final-output__layout">
@@ -246,7 +276,7 @@ export const FinalOutputView = memo(function FinalOutputView({
 
       {/* Keyboard Shortcuts Hint */}
       <div className="final-output__shortcuts" aria-hidden="true">
-        <kbd>1-4</kbd> Switch tabs
+        <kbd>1-5</kbd> Switch tabs
         <kbd>Cmd+E</kbd> Export PDF
         <kbd>Cmd+Shift+C</kbd> Copy Markdown
         <kbd>[</kbd>/<kbd>]</kbd> Navigate rounds

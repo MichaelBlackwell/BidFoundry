@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 # ============================================================================
@@ -22,7 +22,7 @@ class CompanyProfileBase(BaseModel):
         default_factory=list, alias="pastPerformance", description="Past performance references"
     )
 
-    model_config = ConfigDict(populate_by_name=True)
+    model_config = ConfigDict(populate_by_name=True, serialize_by_alias=True)
 
 
 class CompanyProfileCreate(CompanyProfileBase):
@@ -52,7 +52,7 @@ class CompanyProfileResponse(CompanyProfileBase):
     created_at: datetime = Field(alias="createdAt")
     updated_at: datetime = Field(alias="updatedAt")
 
-    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True, serialize_by_alias=True)
 
 
 class CompanyProfileListResponse(BaseModel):
@@ -103,13 +103,15 @@ class DebateEntrySchema(BaseModel):
     Aligned with frontend DebateEntry type for WebSocket events.
     """
 
-    id: str
+    id: Optional[str] = None
     round: int
     phase: str  # 'blue-build' | 'red-attack' | 'blue-defense' | 'synthesis'
-    agent_id: str = Field(alias="agentId")
+    agent_id: Optional[str] = Field(None, alias="agentId")
     type: str  # 'critique' | 'response' | 'synthesis'
     content: str
-    timestamp: datetime
+    timestamp: datetime | str  # Allow string for flexibility
+    severity: str | None = None  # For critiques: 'critical' | 'major' | 'minor'
+    status: str | None = None  # For critiques: 'pending' | 'accepted' | 'rebutted' | 'acknowledged'
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -122,6 +124,11 @@ class RedTeamReportSchema(BaseModel):
 
     entries: list[DebateEntrySchema] = Field(default_factory=list)
     summary: str = ""
+    critiques_by_severity: dict[str, int] = Field(default_factory=dict, alias="critiquesBySeverity")
+    responses_by_disposition: dict[str, int] = Field(default_factory=dict, alias="responsesByDisposition")
+
+    class Config:
+        populate_by_name = True
 
 
 class GenerationMetricsSchema(BaseModel):
@@ -166,6 +173,38 @@ class DocumentListItemSchema(BaseModel):
 
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
+    @field_validator("confidence", mode="before")
+    @classmethod
+    def convert_confidence_to_percentage(cls, v: float) -> float:
+        """Convert confidence from 0-1 to 0-100 format if needed."""
+        if v is None:
+            return 0.0
+        # If value is <= 1.0, it's in 0-1 format, convert to percentage
+        if v <= 1.0:
+            return round(v * 100, 2)
+        # Already in 0-100 format
+        return round(v, 2)
+
+
+class AgentInsightsSummarySchema(BaseModel):
+    """Schema for agent insights summary."""
+
+    agents_contributed: list[dict] = Field(default_factory=list, alias="agentsContributed")
+    key_findings: list[str] = Field(default_factory=list, alias="keyFindings")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class AgentInsightsSchema(BaseModel):
+    """Schema for consolidated agent insights from blue team agents."""
+
+    market_intelligence: dict = Field(default_factory=dict, alias="marketIntelligence")
+    capture_strategy: dict = Field(default_factory=dict, alias="captureStrategy")
+    compliance_status: dict = Field(default_factory=dict, alias="complianceStatus")
+    summary: AgentInsightsSummarySchema = Field(default_factory=AgentInsightsSummarySchema)
+
+    model_config = ConfigDict(populate_by_name=True)
+
 
 class DocumentResponse(BaseModel):
     """Schema for full document response."""
@@ -177,6 +216,7 @@ class DocumentResponse(BaseModel):
     debate_log: list[DebateEntrySchema] = Field(default_factory=list, alias="debateLog")
     metrics: Optional[GenerationMetricsSchema] = None
     requires_human_review: bool = Field(default=False, alias="requiresHumanReview")
+    agent_insights: Optional[AgentInsightsSchema] = Field(None, alias="agentInsights")
 
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 

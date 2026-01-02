@@ -18,6 +18,8 @@ from agents.utils.profile_formatter import (
     format_federal_history,
     format_teaming_relationships,
     format_geographic_coverage,
+    extract_certification_types,
+    extract_past_performance_names,
 )
 
 
@@ -53,6 +55,9 @@ Remember: Your drafts will be challenged by red team agents. Write defensibly by
 - Supporting claims with evidence
 - Acknowledging limitations honestly
 - Avoiding overpromises or unsupported assertions
+
+## Output Length
+Keep responses concise - approximately 1 page (~500-600 words). Be direct and focus on the most critical points. Prioritize actionable insights over comprehensive coverage.
 """
 
 
@@ -62,6 +67,7 @@ def get_draft_prompt(
     company_profile: Dict[str, Any],
     opportunity: Optional[Dict[str, Any]] = None,
     additional_context: Optional[Dict[str, Any]] = None,
+    section_guidance: Optional[Dict[str, str]] = None,
 ) -> str:
     """
     Generate a prompt for drafting a new document.
@@ -72,6 +78,7 @@ def get_draft_prompt(
         company_profile: Company profile data
         opportunity: Optional opportunity data
         additional_context: Additional context from other agents
+        section_guidance: Optional dict mapping section names to guidance text
 
     Returns:
         Formatted prompt string
@@ -79,12 +86,17 @@ def get_draft_prompt(
     prompt_parts = [
         f"## Task: Draft a {document_type}",
         "",
-        "Generate a comprehensive draft for each of the following sections:",
+        "Generate a comprehensive draft for each of the following sections. "
+        "**IMPORTANT: ALL sections listed below are REQUIRED and must be generated.**",
         "",
     ]
 
     for i, section in enumerate(sections, 1):
         prompt_parts.append(f"{i}. {section}")
+        # Add template guidance if available
+        if section_guidance and section in section_guidance:
+            prompt_parts.append(f"   *Guidance*: {section_guidance[section][:200]}...")
+        prompt_parts.append("")
 
     prompt_parts.extend([
         "",
@@ -216,13 +228,18 @@ def get_draft_prompt(
         if pp:
             prompt_parts.append("**Past Performance**:")
             for perf in pp[:5]:  # Limit to top 5
-                prompt_parts.append(f"  - **{perf.get('contract_name')}** ({perf.get('agency')})")
-                prompt_parts.append(f"    Value: ${perf.get('contract_value', 0):,.2f} | Rating: {perf.get('overall_rating', 'N/A')}")
-                if perf.get('contract_type'):
-                    prompt_parts.append(f"    Contract Type: {perf.get('contract_type')}")
-                if perf.get('key_accomplishments'):
-                    for acc in perf.get('key_accomplishments', [])[:2]:
-                        prompt_parts.append(f"    - {acc}")
+                # Handle both dict format and string format
+                if isinstance(perf, dict):
+                    prompt_parts.append(f"  - **{perf.get('contract_name')}** ({perf.get('agency')})")
+                    prompt_parts.append(f"    Value: ${perf.get('contract_value', 0):,.2f} | Rating: {perf.get('overall_rating', 'N/A')}")
+                    if perf.get('contract_type'):
+                        prompt_parts.append(f"    Contract Type: {perf.get('contract_type')}")
+                    if perf.get('key_accomplishments'):
+                        for acc in perf.get('key_accomplishments', [])[:2]:
+                            prompt_parts.append(f"    - {acc}")
+                else:
+                    # Simple string format
+                    prompt_parts.append(f"  - {perf}")
             prompt_parts.append("")
 
         # Federal Contracting History
@@ -415,7 +432,8 @@ def get_revision_prompt(
 
     certs = company_profile.get('certifications', [])
     if certs:
-        prompt_parts.append("Certifications: " + ", ".join([c.get('cert_type', '') for c in certs]))
+        cert_types = extract_certification_types(certs)
+        prompt_parts.append("Certifications: " + ", ".join(cert_types))
 
     if opportunity:
         prompt_parts.append("")
@@ -504,8 +522,8 @@ def get_section_prompt(
         prompt_parts.append(f"**Capabilities**: {', '.join(caps)}")
 
     if company_profile.get('certifications'):
-        certs = [c.get('cert_type', '') for c in company_profile.get('certifications', [])]
-        prompt_parts.append(f"**Certifications**: {', '.join(certs)}")
+        cert_types = extract_certification_types(company_profile.get('certifications', []))
+        prompt_parts.append(f"**Certifications**: {', '.join(cert_types)}")
 
     prompt_parts.append("")
 

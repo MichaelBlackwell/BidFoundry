@@ -384,9 +384,15 @@ class DevilsAdvocateAgent(RedTeamAgent):
             if "sections" in context.current_draft:
                 document_content.update(context.current_draft["sections"])
 
+        # DEBUG: Log document content state
+        self.log_info(f"DevilsAdvocate: Generating critiques for {len(document_content)} sections")
+        for section_name, content in document_content.items():
+            self.log_debug(f"  - Section '{section_name}': {len(content)} chars")
+
         if not document_content:
             result.success = False
             result.errors.append("No document content to critique")
+            self.log_warning("DevilsAdvocate: No document content available to critique!")
             return result
 
         # Generate critique prompt
@@ -407,15 +413,36 @@ class DevilsAdvocateAgent(RedTeamAgent):
 
         if not llm_response.get("success"):
             result.success = False
-            result.errors.append(llm_response.get("error", "LLM call failed"))
+            error_msg = llm_response.get("error", "LLM call failed")
+            result.errors.append(error_msg)
+            self.log_error(f"DevilsAdvocate: LLM call failed - {error_msg}")
             return result
 
         content = llm_response.get("content", "")
+
+        # DEBUG: Log LLM response details
+        self.log_info(f"DevilsAdvocate: LLM response received - {len(content)} chars")
+        if content:
+            # Log first 500 chars of response for debugging
+            preview = content[:500] + "..." if len(content) > 500 else content
+            self.log_debug(f"DevilsAdvocate: LLM response preview:\n{preview}")
+        else:
+            self.log_warning("DevilsAdvocate: LLM returned empty content!")
+
         result.critiques = self._parse_critiques(
             content,
             document_id=context.document_id or "",
             round_number=context.round_number,
         )
+
+        # DEBUG: Log parsing results
+        self.log_info(f"DevilsAdvocate: Parsed {len(result.critiques)} critiques from LLM response")
+        if not result.critiques and content:
+            self.log_warning(
+                "DevilsAdvocate: LLM returned content but no critiques were parsed! "
+                "This may indicate a format mismatch. Check if LLM output matches expected '### Critique N' format."
+            )
+
         result.token_usage = llm_response.get("usage", {})
 
         # Generate overall assessment
@@ -993,6 +1020,15 @@ class DevilsAdvocateAgent(RedTeamAgent):
 
         # Split by critique sections
         critique_sections = re.split(r'###\s*Critique\s*\d+', content, flags=re.IGNORECASE)
+
+        # DEBUG: Log parsing attempt
+        self.log_debug(f"_parse_critiques: Found {len(critique_sections) - 1} potential critique sections")
+        if len(critique_sections) <= 1:
+            # No critiques found - log the content pattern for debugging
+            self.log_warning(
+                f"_parse_critiques: No '### Critique N' patterns found in {len(content)} char response. "
+                f"First 200 chars: {content[:200] if content else '(empty)'}"
+            )
 
         for section in critique_sections[1:]:  # Skip first split (before first critique)
             try:

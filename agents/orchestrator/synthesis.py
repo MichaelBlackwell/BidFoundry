@@ -299,6 +299,9 @@ class DocumentSynthesizer:
                     "metadata": section_meta.to_dict() if self._config.include_section_metadata else None,
                 })
 
+        # Extract and organize agent-specific insights from contributions
+        agent_insights = self._extract_agent_insights(blue_team_contributions or [])
+
         document = {
             "id": context.request_id,
             "type": context.document_type,
@@ -308,8 +311,11 @@ class DocumentSynthesizer:
             # Document content
             "sections": ordered_sections,
 
-            # Blue team contributions from all agents
+            # Blue team contributions from all agents (raw)
             "blue_team_contributions": blue_team_contributions or [],
+
+            # Structured agent insights (extracted and organized)
+            "agent_insights": agent_insights,
 
             # Document-level metadata
             "metadata": {
@@ -320,6 +326,10 @@ class DocumentSynthesizer:
                 "resolved_critiques": resolved_critiques,
                 "resolution_rate": resolution_rate,
                 "blue_team_contributions_count": len(blue_team_contributions or []),
+                "contributing_agents": list(set(
+                    c.get("agent_role") for c in (blue_team_contributions or [])
+                    if c.get("agent_role")
+                )),
             },
 
             # Company and opportunity context
@@ -336,6 +346,127 @@ class DocumentSynthesizer:
             )
 
         return document
+
+    def _extract_agent_insights(
+        self,
+        contributions: List[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        """
+        Extract and organize insights from all blue team agent contributions.
+
+        This consolidates the specialized analyses from:
+        - Market Analyst: TAM/SAM, competitive landscape, opportunities, timing
+        - Capture Strategist: Win themes, discriminators, ghost team analysis, PTW
+        - Compliance Navigator: Eligibility, certifications, compliance status, OCI
+
+        Args:
+            contributions: List of agent contribution dictionaries
+
+        Returns:
+            Organized dictionary of agent insights by category
+        """
+        insights = {
+            "market_intelligence": {},
+            "capture_strategy": {},
+            "compliance_status": {},
+            "summary": {
+                "agents_contributed": [],
+                "key_findings": [],
+            },
+        }
+
+        for contribution in contributions:
+            agent_role = contribution.get("agent_role", "")
+            agent_name = contribution.get("agent_name", "")
+            metadata = contribution.get("metadata", {})
+            content = contribution.get("content", "")
+
+            if agent_role:
+                insights["summary"]["agents_contributed"].append({
+                    "role": agent_role,
+                    "name": agent_name,
+                    "has_content": bool(content),
+                    "has_sections": bool(contribution.get("sections")),
+                })
+
+            # Extract Market Analyst insights
+            if "market_analyst" in agent_role.lower():
+                insights["market_intelligence"] = {
+                    "tam": metadata.get("tam"),
+                    "sam": metadata.get("sam"),
+                    "competitive_density": metadata.get("competitive_density"),
+                    "opportunity_count": metadata.get("opportunity_count"),
+                    "ranked_opportunities": metadata.get("ranked_opportunities", []),
+                    "timing_recommendations": metadata.get("timing_recommendations", []),
+                    "market_trends": metadata.get("market_trends", []),
+                    "analysis_content": content,
+                }
+
+                # Add key findings
+                if metadata.get("competitive_density"):
+                    insights["summary"]["key_findings"].append(
+                        f"Market competitive density: {metadata['competitive_density']}"
+                    )
+                if metadata.get("opportunity_count"):
+                    insights["summary"]["key_findings"].append(
+                        f"Identified {metadata['opportunity_count']} relevant opportunities"
+                    )
+
+            # Extract Capture Strategist insights
+            elif "capture_strategist" in agent_role.lower():
+                insights["capture_strategy"] = {
+                    "win_theme_count": metadata.get("win_theme_count"),
+                    "discriminator_count": metadata.get("discriminator_count"),
+                    "competitor_count": metadata.get("competitor_count"),
+                    "win_probability": metadata.get("win_probability"),
+                    "price_positioning": metadata.get("price_positioning"),
+                    "analysis_content": content,
+                }
+
+                # Add key findings
+                if metadata.get("win_probability"):
+                    insights["summary"]["key_findings"].append(
+                        f"Win probability assessment: {metadata['win_probability']}"
+                    )
+                if metadata.get("win_theme_count"):
+                    insights["summary"]["key_findings"].append(
+                        f"Developed {metadata['win_theme_count']} win themes"
+                    )
+
+            # Extract Compliance Navigator insights
+            elif "compliance_navigator" in agent_role.lower():
+                insights["compliance_status"] = {
+                    "eligible_setasides": metadata.get("eligible_setasides", []),
+                    "overall_status": metadata.get("overall_status"),
+                    "critical_issues_count": metadata.get("critical_issues_count"),
+                    "compliance_gaps_count": metadata.get("compliance_gaps_count"),
+                    "oci_risk_level": metadata.get("oci_risk_level"),
+                    "analysis_content": content,
+                }
+
+                # Add key findings
+                if metadata.get("eligible_setasides"):
+                    insights["summary"]["key_findings"].append(
+                        f"Eligible for set-asides: {', '.join(metadata['eligible_setasides'])}"
+                    )
+                if metadata.get("overall_status"):
+                    insights["summary"]["key_findings"].append(
+                        f"Compliance status: {metadata['overall_status']}"
+                    )
+                if metadata.get("oci_risk_level"):
+                    insights["summary"]["key_findings"].append(
+                        f"OCI risk level: {metadata['oci_risk_level']}"
+                    )
+
+            # Extract Strategy Architect insights (document structure)
+            elif "strategy_architect" in agent_role.lower():
+                section_names = list(contribution.get("sections", {}).keys())
+                if section_names:
+                    insights["summary"]["key_findings"].append(
+                        f"Generated {len(section_names)} document sections"
+                    )
+
+        return insights
 
     def _determine_section_order(self, section_names: Any) -> List[str]:
         """
