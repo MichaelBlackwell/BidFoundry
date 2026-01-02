@@ -281,4 +281,4 @@ Real-time updates are streamed via WebSocket, allowing users to watch the "debat
 
 ## License
 
-Copyright © 2025 [Your Name]. Not licensed for use.
+Copyright © 2025 Michael Blackwell. Not licensed for use.
